@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { ArchivedChatsPanel } from './ArchivedChatsPanel'
+import { KnowledgeLibraryPanel } from './KnowledgeLibraryPanel'
 
 type IconName =
   | 'archive'
+  | 'book'
   | 'chevron'
   | 'leaf'
   | 'menu'
@@ -25,6 +27,12 @@ function Icon({ name }: { name: IconName }) {
         <path d="M5 7.5v11.25A2.25 2.25 0 0 0 7.25 21h9.5A2.25 2.25 0 0 0 19 18.75V7.5" />
         <path d="M4.5 3h15v4.5h-15z" />
         <path d="M9 12h6" />
+      </>
+    ),
+    book: (
+      <>
+        <path d="M5 4.75A2.75 2.75 0 0 1 7.75 2h10.5v17.5H7.75A2.75 2.75 0 0 0 5 22Z" />
+        <path d="M5 4.75v14.5M9 6.5h5.5M9 10h5.5" />
       </>
     ),
     chevron: <path d="m8 10 4 4 4-4" />,
@@ -82,6 +90,7 @@ function Icon({ name }: { name: IconName }) {
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isArchiveOpen, setIsArchiveOpen] = useState(false)
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
 
   const closeSidebar = () => setIsSidebarOpen(false)
 
@@ -145,6 +154,17 @@ export function AppShell({ children }: AppShellProps) {
             >
               <Icon name="archive" />
               Archived chats
+            </button>
+            <button
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              onClick={() => {
+                closeSidebar()
+                setIsLibraryOpen(true)
+              }}
+              type="button"
+            >
+              <Icon name="book" />
+              Knowledge library
             </button>
           </nav>
 
@@ -212,6 +232,10 @@ export function AppShell({ children }: AppShellProps) {
         <ArchivedChatsPanel
           isOpen={isArchiveOpen}
           onClose={() => setIsArchiveOpen(false)}
+        />
+        <KnowledgeLibraryPanel
+          isOpen={isLibraryOpen}
+          onClose={() => setIsLibraryOpen(false)}
         />
       </div>
     </div>
