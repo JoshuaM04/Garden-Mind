@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { ArchivedChatsPanel } from './ArchivedChatsPanel'
 
 type IconName =
   | 'archive'
@@ -80,6 +81,7 @@ function Icon({ name }: { name: IconName }) {
 
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
 
   const closeSidebar = () => setIsSidebarOpen(false)
 
@@ -133,14 +135,17 @@ export function AppShell({ children }: AppShellProps) {
               <Icon name="message" />
               Garden chat
             </a>
-            <a
+            <button
               className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
-              href="#archive"
-              onClick={closeSidebar}
+              onClick={() => {
+                closeSidebar()
+                setIsArchiveOpen(true)
+              }}
+              type="button"
             >
               <Icon name="archive" />
               Archived chats
-            </a>
+            </button>
           </nav>
 
           <div className="mt-auto border-t border-[var(--color-border)] pt-4">
@@ -204,6 +209,10 @@ export function AppShell({ children }: AppShellProps) {
           </header>
           {children}
         </main>
+        <ArchivedChatsPanel
+          isOpen={isArchiveOpen}
+          onClose={() => setIsArchiveOpen(false)}
+        />
       </div>
     </div>
   )
