@@ -37,8 +37,26 @@
   }
 }
 
+@keyframes garden-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-0.2rem);
+  }
+}
+
 @layer utilities {
   .animate-garden-pulse {
     animation: garden-pulse 2.8s ease-in-out infinite;
+  }
+
+  .animate-garden-typing-dot {
+    animation: garden-typing-dot 0.9s ease-in-out infinite;
   }
 }

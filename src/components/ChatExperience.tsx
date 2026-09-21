@@ -10,10 +10,19 @@ type IconName =
   | 'sun'
   | 'x'
 
-interface Message {
+interface ChatMessage {
   id: number
   content: string
-  sender: 'assistant' | 'user'
+  role: 'assistant' | 'user'
+}
+
+function isChatResponse(data: unknown): data is { 'assistant message': string } {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'assistant message' in data &&
+    typeof data['assistant message'] === 'string'
+  )
 }
 
 const suggestions = [
@@ -88,28 +97,58 @@ export function ChatExperience() {
   const [message, setMessage] = useState('')
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [attachment, setAttachment] = useState<File | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [conversation, setConversation] = useState<ChatMessage[]>([])
+  const [isSending, setIsSending] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const attachmentInput = useRef<HTMLInputElement>(null)
 
-  const sendMessage = (event: FormEvent<HTMLFormElement>) => {
+  async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const content = message.trim()
-    if (!content) {
+
+    if (!content || isSending) {
       return
     }
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      { id: Date.now(), content, sender: 'user' },
-      {
-        id: Date.now() + 1,
-        content:
-          'Your Garden Mind conversation is ready. Connect the FastAPI chat endpoint to begin receiving grounded gardening guidance here.',
-        sender: 'assistant',
-      },
+    setConversation((currentConversation) => [
+      ...currentConversation,
+      { id: Date.now(), content, role: 'user' },
     ])
     setMessage('')
+    setErrorMessage(null)
+    setIsSending(true)
+
+    try {
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: content, history: conversation }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Garden Mind could not answer right now. Please try again.')
+      }
+
+      const data: unknown = await response.json()
+
+      if (!isChatResponse(data)) {
+        throw new Error('Garden Mind returned an unexpected response. Please try again.')
+      }
+
+      setConversation((currentConversation) => [
+        ...currentConversation,
+        { id: Date.now(), content: data['assistant message'], role: 'assistant' },
+      ])
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Garden Mind could not answer right now. Please try again.',
+      )
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -120,7 +159,7 @@ export function ChatExperience() {
     >
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col">
         <div className="flex-1">
-          {messages.length === 0 ? (
+          {conversation.length === 0 ? (
             <div className="mx-auto flex max-w-2xl flex-col items-center pt-5 text-center sm:pt-14">
               <div className="relative mb-7 grid size-20 place-items-center rounded-full border border-[var(--color-sage)] bg-[var(--color-sprout)] text-[var(--color-forest)]">
                 <span className="grid size-12 place-items-center rounded-full bg-[var(--color-forest)] text-[var(--color-sprout)]">
@@ -164,22 +203,22 @@ export function ChatExperience() {
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-3xl space-y-6 pb-6">
-              {messages.map((chatMessage) => (
+            <div aria-busy={isSending} className="mx-auto max-w-3xl space-y-6 pb-6">
+              {conversation.map((chatMessage) => (
                 <div
                   className={`flex gap-3 ${
-                    chatMessage.sender === 'user' ? 'justify-end' : 'justify-start'
+                    chatMessage.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                   key={chatMessage.id}
                 >
-                  {chatMessage.sender === 'assistant' && (
+                  {chatMessage.role === 'assistant' && (
                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
                       <Icon name="sparkle" />
                     </span>
                   )}
                   <p
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                      chatMessage.sender === 'user'
+                      chatMessage.role === 'user'
                         ? 'rounded-br-sm bg-[var(--color-forest)] text-white'
                         : 'rounded-bl-sm border border-[var(--color-border)] bg-white text-[var(--color-ink)]'
                     }`}
@@ -188,6 +227,25 @@ export function ChatExperience() {
                   </p>
                 </div>
               ))}
+              {isSending && (
+                <div aria-label="Garden Mind is typing" className="flex gap-3" role="status">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
+                      <Icon name="sparkle" />
+                    </span>
+                    <div
+                      aria-hidden="true"
+                      className="flex h-12 items-center gap-1 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4"
+                    >
+                      {[0, 1, 2].map((dot) => (
+                        <span
+                          className="size-1.5 rounded-full bg-[var(--color-moss)] animate-garden-typing-dot motion-reduce:animate-none"
+                          key={dot}
+                          style={{ animationDelay: `${dot * 160}ms` }}
+                        />
+                      ))}
+                    </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -217,6 +275,16 @@ export function ChatExperience() {
                 className="block max-h-36 min-h-14 w-full resize-none border-0 bg-transparent py-2 text-[15px] leading-6 text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
                 id="garden-question"
                 onChange={(event) => setMessage(event.target.value)}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === 'Enter' &&
+                    !event.shiftKey &&
+                    !event.nativeEvent.isComposing
+                  ) {
+                    event.preventDefault()
+                    event.currentTarget.form?.requestSubmit()
+                  }
+                }}
                 placeholder={
                   isVoiceMode
                     ? 'Voice mode is on. Tap the microphone to begin.'
@@ -262,13 +330,18 @@ export function ChatExperience() {
               <button
                 aria-label="Send message"
                 className="grid size-10 place-items-center rounded-xl bg-[var(--color-forest)] text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={!message.trim()}
+                disabled={isSending || !message.trim()}
                 type="submit"
               >
                 <Icon name="arrow" />
               </button>
             </div>
           </form>
+          {errorMessage && (
+            <p className="mt-3 text-center text-xs text-red-700" role="alert">
+              {errorMessage}
+            </p>
+          )}
           <p className="mt-3 text-center text-xs text-[var(--color-ink-faint)]">
             Garden Mind can make mistakes. Verify plant safety and local growing
             guidance.
