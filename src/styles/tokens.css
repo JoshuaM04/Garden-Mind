@@ -1,0 +1,25 @@
+:root {
+  --color-canvas: #eff2ea;
+  --color-surface: #fbfcf7;
+  --color-surface-muted: #f4f6ef;
+  --color-ink: #21342b;
+  --color-ink-muted: #68756a;
+  --color-ink-faint: #8d988f;
+  --color-forest: #294c3b;
+  --color-moss: #56745a;
+  --color-sage: #b9cbb5;
+  --color-sprout: #dce8ce;
+  --color-gold: #d5ae53;
+  --color-border: #d9dfd3;
+  --color-border-strong: #c6d0c3;
+  --color-shadow: rgb(35 57 44 / 12%);
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --shadow-card: 0 22px 60px rgb(35 57 44 / 10%);
+  --shadow-float: 0 10px 30px rgb(35 57 44 / 14%);
+}
