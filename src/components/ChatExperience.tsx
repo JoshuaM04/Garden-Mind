@@ -126,7 +126,10 @@ export function ChatExperience() {
                 <span className="grid size-12 place-items-center rounded-full bg-[var(--color-forest)] text-[var(--color-sprout)]">
                   <Icon name="sparkle" />
                 </span>
-                <span className="absolute -right-1 top-1 size-4 rounded-full border-2 border-[var(--color-surface)] bg-[var(--color-gold)]" />
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-1 top-1 size-4 rounded-full border-2 border-[var(--color-surface)] bg-[var(--color-moss)] animate-garden-pulse motion-reduce:animate-none"
+                />
               </div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-moss)]">
                 Garden Mind
