@@ -95,8 +95,8 @@ export function AppShell({ children }: AppShellProps) {
   const closeSidebar = () => setIsSidebarOpen(false)
 
   return (
-    <div className="min-h-svh bg-[var(--color-canvas)] p-0 text-[var(--color-ink)] lg:p-4">
-      <div className="relative mx-auto flex min-h-svh max-w-[1600px] overflow-hidden bg-[var(--color-surface)] lg:min-h-[calc(100svh-2rem)] lg:rounded-[var(--radius-xl)] lg:shadow-[var(--shadow-card)]">
+    <div className="min-h-svh text-[var(--color-ink)]">
+      <div className="relative flex min-h-svh overflow-hidden bg-[var(--color-surface)]">
         <aside
           aria-label="Primary navigation"
           className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-transform duration-300 lg:relative lg:w-64 lg:translate-x-0 ${
