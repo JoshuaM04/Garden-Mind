@@ -16,6 +16,11 @@ interface ChatMessage {
   role: 'assistant' | 'user'
 }
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
+  (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const chatEndpoint = `${apiBaseUrl}/api/chat`
+
 function isChatResponse(data: unknown): data is { 'assistant message': string } {
   return (
     typeof data === 'object' &&
@@ -215,7 +220,7 @@ export function ChatExperience() {
     setIsSending(true)
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(chatEndpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ message: content, history: conversation }),

@@ -31,6 +31,19 @@ Create `backend/.env` with an `HF_TOKEN` value, then run this command from the
 python -m uvicorn app.services.main:app --reload --port 8000 --env-file .env
 ```
 
+## Deploying to Vercel
+
+The repository's root [`vercel.json`](../vercel.json) defines separate Vite
+frontend and FastAPI backend services. It routes `/api/*` requests to this
+backend while preserving the request path, so `POST /api/chat` reaches the
+FastAPI application. The frontend uses `http://localhost:8000` while running
+under Vite and uses its own deployed origin for `/api/chat` in production.
+
+Before deploying, add `HF_TOKEN` as an encrypted environment variable in the
+Vercel project settings for the Production, Preview, and Development
+environments that need chat access. Do not place that token in a frontend
+`VITE_*` variable or commit it to the repository.
+
 ## Suggested implementation sequence
 
 1. Add a health endpoint and automated backend tests.
