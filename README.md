@@ -3,7 +3,7 @@
 ## Desktop Preview
 
 
-<!-- ![Garden Mind desktop preview](./docs/images/desktop.png) -->
+![Garden Mind desktop preview](docs/images/desktop.png)
 
 ## About
 
