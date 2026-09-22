@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 
 type IconName =
   | 'arrow'
@@ -12,20 +19,68 @@ interface ChatMessage {
   id: number
   content: string
   role: 'assistant' | 'user'
+  sources?: string[]
+}
+
+interface DocumentUploadResponse {
+  context: string
+  filename: string
+  status: 'processed'
+  truncated: boolean
 }
 
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
   (import.meta.env.DEV ? 'http://localhost:8000' : '')
 const chatEndpoint = `${apiBaseUrl}/api/chat`
+const documentsEndpoint = `${apiBaseUrl}/api/documents`
 
-function isChatResponse(data: unknown): data is { 'assistant message': string } {
+function isChatResponse(
+  data: unknown,
+): data is { 'assistant message': string; sources?: string[] } {
   return (
     typeof data === 'object' &&
     data !== null &&
     'assistant message' in data &&
-    typeof data['assistant message'] === 'string'
+    typeof data['assistant message'] === 'string' &&
+    (!('sources' in data) ||
+      (Array.isArray(data.sources) &&
+        data.sources.every((source) => typeof source === 'string')))
   )
+}
+
+function isDocumentUploadResponse(data: unknown): data is DocumentUploadResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'status' in data &&
+    data.status === 'processed' &&
+    'filename' in data &&
+    typeof data.filename === 'string' &&
+    'context' in data &&
+    typeof data.context === 'string' &&
+    'truncated' in data &&
+    typeof data.truncated === 'boolean'
+  )
+}
+
+async function getApiError(response: Response, fallbackMessage: string) {
+  try {
+    const data: unknown = await response.json()
+
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      'detail' in data &&
+      typeof data.detail === 'string'
+    ) {
+      return data.detail
+    }
+  } catch {
+    return fallbackMessage
+  }
+
+  return fallbackMessage
 }
 
 function formatInlineMessage(content: string): ReactNode {
@@ -187,7 +242,10 @@ function Icon({ name }: { name: IconName }) {
 export function ChatExperience() {
   const [message, setMessage] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
+  const [documentContext, setDocumentContext] = useState<string | null>(null)
+  const [documentWasTruncated, setDocumentWasTruncated] = useState(false)
   const [conversation, setConversation] = useState<ChatMessage[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const attachmentInput = useRef<HTMLInputElement>(null)
@@ -201,12 +259,79 @@ export function ChatExperience() {
     }
   }, [conversation, isSending])
 
+  async function uploadAttachment(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    setAttachment(file)
+    setDocumentContext(null)
+    setDocumentWasTruncated(false)
+    setErrorMessage(null)
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch(documentsEndpoint, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(
+          await getApiError(
+            response,
+            'Garden Mind could not process that document. Please try another file.',
+          ),
+        )
+      }
+
+      const data: unknown = await response.json()
+
+      if (!isDocumentUploadResponse(data)) {
+        throw new Error('Garden Mind returned an unexpected document response.')
+      }
+
+      setDocumentContext(data.context)
+      setDocumentWasTruncated(data.truncated)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Garden Mind could not process that document. Please try another file.',
+      )
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  function removeAttachment() {
+    if (isUploading) {
+      return
+    }
+
+    setAttachment(null)
+    setDocumentContext(null)
+    setDocumentWasTruncated(false)
+    setErrorMessage(null)
+  }
+
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const content = message.trim()
 
-    if (!content || isSending) {
+    if (
+      !content ||
+      isSending ||
+      isUploading ||
+      (attachment !== null && !documentContext)
+    ) {
       return
     }
 
@@ -222,7 +347,12 @@ export function ChatExperience() {
       const response = await fetch(chatEndpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: content, history: conversation }),
+        body: JSON.stringify({
+          message: content,
+          history: conversation,
+          document_context: documentContext,
+          document_filename: attachment?.name,
+        }),
       })
 
       if (!response.ok) {
@@ -237,7 +367,12 @@ export function ChatExperience() {
 
       setConversation((currentConversation) => [
         ...currentConversation,
-        { id: Date.now(), content: data['assistant message'], role: 'assistant' },
+        {
+          id: Date.now(),
+          content: data['assistant message'],
+          role: 'assistant',
+          sources: data.sources,
+        },
       ])
     } catch (error) {
       setErrorMessage(
@@ -322,6 +457,11 @@ export function ChatExperience() {
                   {chatMessage.role === 'assistant' ? (
                     <div className="w-full max-w-full space-y-3 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
+                      {chatMessage.sources && chatMessage.sources.length > 0 && (
+                        <p className="border-t border-[var(--color-border)] pt-2 text-xs leading-5 text-[var(--color-ink-muted)]">
+                          Sources: {chatMessage.sources.join(', ')}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-white">
@@ -361,11 +501,23 @@ export function ChatExperience() {
             {attachment && (
               <div className="mx-2 mt-2 flex items-center gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3 py-2 text-sm text-[var(--color-ink-muted)]">
                 <Icon name="document" />
-                <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{attachment.name}</span>
+                  <span className="block text-xs">
+                    {isUploading
+                      ? 'Preparing document...'
+                      : documentContext
+                        ? documentWasTruncated
+                          ? 'The first part is ready for this chat only.'
+                          : 'Ready for this chat only.'
+                        : 'Document upload failed.'}
+                  </span>
+                </span>
                 <button
                   aria-label={`Remove ${attachment.name}`}
-                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-white hover:text-[var(--color-forest)]"
-                  onClick={() => setAttachment(null)}
+                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-white hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={isUploading}
+                  onClick={removeAttachment}
                   type="button"
                 >
                   <Icon name="x" />
@@ -396,15 +548,17 @@ export function ChatExperience() {
             <div className="flex items-center justify-between gap-2 px-1 pb-1">
               <div className="flex items-center gap-1">
                 <input
-                  accept=".pdf,.doc,.docx,.txt,.md"
+                  accept=".pdf,.docx,.txt,.md"
                   className="hidden"
-                  onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+                  disabled={isUploading || attachment !== null}
+                  onChange={(event) => void uploadAttachment(event)}
                   ref={attachmentInput}
                   type="file"
                 />
                 <button
                   aria-label="Attach a document"
-                  className="rounded-xl p-2.5 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+                  className="rounded-xl p-2.5 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={isUploading || attachment !== null}
                   onClick={() => attachmentInput.current?.click()}
                   type="button"
                 >
@@ -414,7 +568,12 @@ export function ChatExperience() {
               <button
                 aria-label="Send message"
                 className="grid size-10 place-items-center rounded-xl bg-[var(--color-forest)] text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={isSending || !message.trim()}
+                disabled={
+                  isSending ||
+                  isUploading ||
+                  !message.trim() ||
+                  (attachment !== null && !documentContext)
+                }
                 type="submit"
               >
                 <Icon name="arrow" />

@@ -1,5 +1,10 @@
 fastapi
 uvicorn
 huggingface_hub
+langchain-core
+langchain-community
 pydantic
+pypdf
 python-dotenv
+python-multipart
+docx2txt
