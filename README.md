@@ -17,8 +17,7 @@ Currently, two official plugins are available:
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-Live Website: https://garden-mind-dy1ijz37a-joshuam04-projects.vercel.app/
-
+Live Website: https://garden-mind-six.vercel.app/
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
