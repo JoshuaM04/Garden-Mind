@@ -4,8 +4,6 @@ type IconName =
   | 'arrow'
   | 'attachment'
   | 'document'
-  | 'mic'
-  | 'pause'
   | 'sparkle'
   | 'sun'
   | 'x'
@@ -155,13 +153,6 @@ function Icon({ name }: { name: IconName }) {
         <path d="M13.5 3v4h4M9 12h6M9 16h4" />
       </>
     ),
-    mic: (
-      <>
-        <rect height="11" rx="3" width="6" x="9" y="3" />
-        <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7" />
-      </>
-    ),
-    pause: <path d="M9 5v14M15 5v14" />,
     sparkle: (
       <>
         <path d="m12 2 1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6L12 2Z" />
@@ -195,7 +186,6 @@ function Icon({ name }: { name: IconName }) {
 
 export function ChatExperience() {
   const [message, setMessage] = useState('')
-  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [attachment, setAttachment] = useState<File | null>(null)
   const [conversation, setConversation] = useState<ChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
@@ -398,11 +388,7 @@ export function ChatExperience() {
                     event.currentTarget.form?.requestSubmit()
                   }
                 }}
-                placeholder={
-                  isVoiceMode
-                    ? 'Voice mode is on. Tap the microphone to begin.'
-                    : 'Ask anything about your garden...'
-                }
+                placeholder="Ask anything about your garden..."
                 rows={1}
                 value={message}
               />
@@ -423,21 +409,6 @@ export function ChatExperience() {
                   type="button"
                 >
                   <Icon name="attachment" />
-                </button>
-                <button
-                  aria-pressed={isVoiceMode}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-                    isVoiceMode
-                      ? 'bg-[var(--color-sprout)] text-[var(--color-forest)]'
-                      : 'text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]'
-                  }`}
-                  onClick={() => setIsVoiceMode((isActive) => !isActive)}
-                  type="button"
-                >
-                  <Icon name={isVoiceMode ? 'pause' : 'mic'} />
-                  <span className="hidden sm:inline">
-                    {isVoiceMode ? 'Voice on' : 'Voice'}
-                  </span>
                 </button>
               </div>
               <button
