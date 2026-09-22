@@ -1,21 +1,39 @@
 # Garden Mind backend
 
-This directory is deliberately an **unimplemented starting point** for the
-FastAPI service. The current milestone is the React user interface; no server,
-model, authentication, or document-processing code is included here.
+This directory contains the FastAPI service for Garden Mind's chat endpoint.
 
-## Intended responsibility boundaries
+## Current chat behavior
 
-- `app/api/` — FastAPI routes for chat, documents, speech-to-text, and
-  text-to-speech.
-- `app/services/` — orchestration around LangChain, the LLM provider, vector
-  store, and Redis.
-- `app/models/` — API request/response schemas and persistence models.
-- `tests/` — backend tests as endpoints and services are implemented.
+- `POST /api/chat` accepts a new message and prior conversation history.
+- Garden, outdoor-living, greeting, and unrelated requests are sent to the
+  configured Hugging Face model so replies can be conversational and
+  context-aware.
+- Obvious prompt-injection attempts receive a local gardening redirect without
+  making a model request.
+- The model receives at most the 12 most recent safe history messages to bound
+  input-token usage.
+- The system prompt scopes responses to gardening, plant and product safety,
+  nutrition, backyard layouts, outdoor furniture, and safety-aware backyard
+  projects. It also requests plain-text paragraphs and lists that render well
+  in the chat UI.
+- The local Vite development origin (`http://localhost:5173`) is allowed by
+  CORS middleware.
+
+The deterministic guards are intentionally lightweight. The system prompt
+remains the primary policy layer for nuanced or ambiguous requests.
+
+## Running locally
+
+Create `backend/.env` with an `HF_TOKEN` value, then run this command from the
+`backend/` directory:
+
+```powershell
+python -m uvicorn app.services.main:app --reload --port 8000 --env-file .env
+```
 
 ## Suggested implementation sequence
 
-1. Create the FastAPI application entry point and health endpoint.
+1. Add a health endpoint and automated backend tests.
 2. Add document upload and processing status endpoints.
 3. Introduce embeddings and a vector store with document metadata.
 4. Implement conversation-aware RAG chat responses and citations.
@@ -23,6 +41,5 @@ model, authentication, or document-processing code is included here.
 6. Add speech-to-text and text-to-speech endpoints.
 7. Add authenticated user and conversation persistence.
 
-The frontend currently uses local UI state for attachments and messages. When
-the APIs are ready, replace those state-only interactions with typed client
-calls to this service.
+The frontend currently sends chat requests directly to this service. Attachments
+remain local UI state until document processing is implemented.

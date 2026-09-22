@@ -95,8 +95,8 @@ export function AppShell({ children }: AppShellProps) {
   const closeSidebar = () => setIsSidebarOpen(false)
 
   return (
-    <div className="min-h-svh text-[var(--color-ink)]">
-      <div className="relative flex min-h-svh overflow-hidden bg-[var(--color-surface)]">
+    <div className="h-svh overflow-hidden text-[var(--color-ink)]">
+      <div className="relative flex h-full overflow-hidden bg-[var(--color-surface)]">
         <aside
           aria-label="Primary navigation"
           className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-transform duration-300 lg:relative lg:w-64 lg:translate-x-0 ${
@@ -205,8 +205,8 @@ export function AppShell({ children }: AppShellProps) {
           />
         )}
 
-        <main className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-[73px] items-center justify-between border-b border-[var(--color-border)] px-4 sm:px-6 lg:px-8">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 sm:px-6 lg:px-8">
             <button
               aria-label="Open navigation"
               className="rounded-lg p-2 text-[var(--color-forest)] lg:hidden"

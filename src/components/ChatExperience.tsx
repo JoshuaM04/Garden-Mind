@@ -25,6 +25,101 @@ function isChatResponse(data: unknown): data is { 'assistant message': string } 
   )
 }
 
+function formatInlineMessage(content: string): ReactNode {
+  return content.split(/(\*\*[^*]+\*\*)/g).map((segment, index) => {
+    if (segment.startsWith('**') && segment.endsWith('**')) {
+      return <strong key={index}>{segment.slice(2, -2)}</strong>
+    }
+
+    return segment
+  })
+}
+
+function formatAssistantMessage(content: string): ReactNode {
+  const blocks: ReactNode[] = []
+  const paragraphLines: string[] = []
+  const listItems: string[] = []
+  let listType: 'ordered' | 'unordered' | null = null
+  let listStart = 1
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) {
+      return
+    }
+
+    blocks.push(
+      <p className="whitespace-pre-wrap" key={`paragraph-${blocks.length}`}>
+        {formatInlineMessage(paragraphLines.join('\n'))}
+      </p>,
+    )
+    paragraphLines.length = 0
+  }
+
+  const flushList = () => {
+    if (listType === null) {
+      return
+    }
+
+    const items = listItems.map((item, index) => (
+      <li key={`${index}-${item}`}>{formatInlineMessage(item)}</li>
+    ))
+
+    blocks.push(
+      listType === 'unordered' ? (
+        <ul className="list-disc space-y-1 pl-5" key={`list-${blocks.length}`}>
+          {items}
+        </ul>
+      ) : (
+        <ol
+          className="list-decimal space-y-1 pl-5"
+          key={`list-${blocks.length}`}
+          start={listStart}
+        >
+          {items}
+        </ol>
+      ),
+    )
+    listItems.length = 0
+    listType = null
+    listStart = 1
+  }
+
+  for (const line of content.split('\n')) {
+    const unorderedMatch = line.match(/^\s*[-*+]\s+(.+)$/)
+    const orderedMatch = line.match(/^\s*(\d+)[.)]\s+(.+)$/)
+
+    if (unorderedMatch || orderedMatch) {
+      flushParagraph()
+
+      const nextListType = unorderedMatch ? 'unordered' : 'ordered'
+      if (listType !== null && listType !== nextListType) {
+        flushList()
+      }
+
+      if (listType === null) {
+        listType = nextListType
+        listStart = orderedMatch ? Number.parseInt(orderedMatch[1], 10) : 1
+      }
+
+      listItems.push(unorderedMatch ? unorderedMatch[1] : orderedMatch![2])
+      continue
+    }
+
+    flushList()
+
+    if (line.trim()) {
+      paragraphLines.push(line)
+    } else {
+      flushParagraph()
+    }
+  }
+
+  flushParagraph()
+  flushList()
+
+  return blocks
+}
+
 const suggestions = [
   {
     icon: 'sun' as const,
@@ -154,11 +249,14 @@ export function ChatExperience() {
   return (
     <section
       aria-label="Garden Mind conversation"
-      className="flex min-h-0 flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
       id="chat"
     >
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col">
-        <div className="flex-1">
+      <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
+        <div
+          aria-label="Conversation messages"
+          className="min-h-0 flex-1 overflow-y-auto pr-2"
+        >
           {conversation.length === 0 ? (
             <div className="mx-auto flex max-w-2xl flex-col items-center pt-5 text-center sm:pt-14">
               <div className="relative mb-7 grid size-20 place-items-center rounded-full border border-[var(--color-sage)] bg-[var(--color-sprout)] text-[var(--color-forest)]">
@@ -216,15 +314,15 @@ export function ChatExperience() {
                       <Icon name="sparkle" />
                     </span>
                   )}
-                  <p
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                      chatMessage.role === 'user'
-                        ? 'rounded-br-sm bg-[var(--color-forest)] text-white'
-                        : 'rounded-bl-sm border border-[var(--color-border)] bg-white text-[var(--color-ink)]'
-                    }`}
-                  >
-                    {chatMessage.content}
-                  </p>
+                  {chatMessage.role === 'assistant' ? (
+                    <div className="max-w-[85%] space-y-3 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)]">
+                      {formatAssistantMessage(chatMessage.content)}
+                    </div>
+                  ) : (
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-white">
+                      {chatMessage.content}
+                    </p>
+                  )}
                 </div>
               ))}
               {isSending && (
@@ -250,7 +348,7 @@ export function ChatExperience() {
           )}
         </div>
 
-        <div className="sticky bottom-0 mt-8 bg-[linear-gradient(to_bottom,transparent,rgba(251,252,247,0.96)_20%)] pb-2 pt-8">
+        <div className="mt-4 shrink-0 bg-[linear-gradient(to_bottom,transparent,rgba(251,252,247,0.96)_20%)] pb-2 pt-8">
           <form
             className="rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-white p-2 shadow-[var(--shadow-float)]"
             onSubmit={sendMessage}
