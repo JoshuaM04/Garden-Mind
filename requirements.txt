@@ -1,1 +1,5 @@
--r backend/requirements.txt
+fastapi
+uvicorn
+huggingface_hub
+pydantic
+python-dotenv
