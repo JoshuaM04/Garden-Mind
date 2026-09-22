@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 
 type IconName =
   | 'arrow'
@@ -201,6 +201,15 @@ export function ChatExperience() {
   const [isSending, setIsSending] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const attachmentInput = useRef<HTMLInputElement>(null)
+  const conversationMessages = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const messagePane = conversationMessages.current
+
+    if (messagePane) {
+      messagePane.scrollTo({ top: messagePane.scrollHeight, behavior: 'smooth' })
+    }
+  }, [conversation, isSending])
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -261,9 +270,10 @@ export function ChatExperience() {
         <div
           aria-label="Conversation messages"
           className="min-h-0 flex-1 overflow-y-auto pr-2"
+          ref={conversationMessages}
         >
           {conversation.length === 0 ? (
-            <div className="mx-auto flex max-w-2xl flex-col items-center pt-5 text-center sm:pt-14">
+            <div className="mx-auto flex w-full max-w-2xl flex-col items-center pt-3 text-center sm:pt-14">
               <div className="relative mb-7 grid size-20 place-items-center rounded-full border border-[var(--color-sage)] bg-[var(--color-sprout)] text-[var(--color-forest)]">
                 <span className="grid size-12 place-items-center rounded-full bg-[var(--color-forest)] text-[var(--color-sprout)]">
                   <Icon name="sparkle" />
@@ -284,7 +294,7 @@ export function ChatExperience() {
                 research, and the questions that come up outside.
               </p>
 
-              <div className="mt-9 grid w-full gap-3 text-left sm:grid-cols-3">
+              <div className="mt-9 hidden w-full gap-3 text-left sm:grid sm:grid-cols-3">
                 {suggestions.map((suggestion) => (
                   <button
                     className="group rounded-2xl border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
@@ -309,18 +319,18 @@ export function ChatExperience() {
             <div aria-busy={isSending} className="mx-auto max-w-3xl space-y-6 pb-6">
               {conversation.map((chatMessage) => (
                 <div
-                  className={`flex gap-3 ${
+                  className={`flex gap-0 sm:gap-3 ${
                     chatMessage.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                   key={chatMessage.id}
                 >
                   {chatMessage.role === 'assistant' && (
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                   )}
                   {chatMessage.role === 'assistant' ? (
-                    <div className="max-w-[85%] space-y-3 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)]">
+                    <div className="w-full max-w-full space-y-3 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
                     </div>
                   ) : (
@@ -331,8 +341,8 @@ export function ChatExperience() {
                 </div>
               ))}
               {isSending && (
-                <div aria-label="Garden Mind is typing" className="flex gap-3" role="status">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
+                <div aria-label="Garden Mind is typing" className="flex gap-0 sm:gap-3" role="status">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                     <div
