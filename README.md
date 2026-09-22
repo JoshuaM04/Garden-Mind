@@ -1,82 +1,68 @@
-# React + TypeScript + Vite
+# Garden Mind
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Desktop Preview
 
 
+<!-- ![Garden Mind desktop preview](./docs/images/desktop.png) -->
 
+## About
 
+Garden Mind is an AI-powered gardening and outdoor-living assistant that helps
+users plan gardens, care for plants, troubleshoot common problems, and make
+informed decisions about their outdoor spaces. The application combines a
+responsive React interface with a FastAPI backend and Hugging Face language
+model inference to provide practical, safety-conscious conversational guidance.
 
+Users can also attach PDF, DOCX, Markdown, and text documents for temporary,
+session-only context in their questions. Garden Mind is actively under
+development as new capabilities and improvements are explored.
 
+## Technical Overview
 
-## React Compiler
+### Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React, TypeScript, Vite, and Tailwind CSS
+- **Backend:** Python and FastAPI
+- **AI inference:** Hugging Face Inference API with
+  `meta-llama/Llama-3.1-8B-Instruct:novita`
+- **Document processing:** LangChain community document loaders, PyPDF, and
+  docx2txt
+- **Deployment:** Vercel, with the Vite application and FastAPI serverless API
+  connected through `/api/*` rewrites
 
-Live Website: https://garden-mind-six.vercel.app/
-## Expanding the ESLint configuration
+### How AI Responses Work
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The React client sends a gardening question and a bounded recent conversation
+history to the FastAPI API. The API adds a gardening and outdoor-living system
+prompt, then requests a response from the Llama model through Hugging Face.
+Model access is configured only on the server with environment variables; no
+provider credentials are exposed to the browser or committed to this repository.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+The interface supports plain-language formatting, including paragraphs, bullet
+lists, and numbered steps. It also displays source filenames when an answer
+uses an attached document.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Temporary Document Context
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Users can attach PDF, DOCX, Markdown, or plain-text files up to 10 MB. The API
+extracts readable text, limits the returned context to 12,000 characters, and
+sends that context back to the active browser session. For subsequent
+questions, the browser includes the bounded text with the chat request so the
+LLM can use it as reference material.
 
-```
+Documents, extracted text, and chat history are not stored in a database,
+object store, or persistent server-side index. They are discarded on browser
+refresh, tab close, deployment restart, or attachment removal.
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+### Safety Guardrails
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+- Direct user messages and recent history are screened for common
+  prompt-injection patterns before reaching the model.
+- Uploaded document text is labeled as untrusted reference material, and the
+  model is instructed not to follow instructions found inside a document.
+- The system prompt constrains responses to gardening and outdoor living,
+  redirects unrelated requests, and includes safety guidance for chemicals,
+  pets, pollinators, fire, construction, utility lines, permits, and urgent
+  health concerns.
+- Conversation history, document context, and model output length are bounded
+  to keep requests focused and limit unnecessary inference usage.
