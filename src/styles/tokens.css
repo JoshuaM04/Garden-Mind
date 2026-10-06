@@ -51,7 +51,35 @@
   }
 }
 
+@keyframes garden-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes garden-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @layer utilities {
+  .animate-garden-slide-in {
+    animation: garden-slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .animate-garden-fade-in {
+    animation: garden-fade-in 0.3s ease-out;
+  }
+
   .animate-garden-pulse {
     animation: garden-pulse 2.8s ease-in-out infinite;
   }

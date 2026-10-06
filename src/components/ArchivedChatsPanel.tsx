@@ -83,13 +83,13 @@ export function ArchivedChatsPanel({
     <div className="fixed inset-0 z-40">
       <button
         aria-label="Close archived chats"
-        className="absolute inset-0 bg-[rgb(33_52_43/35%)]"
+        className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
         onClick={onClose}
         type="button"
       />
       <aside
         aria-label="Archived chats"
-        className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-[var(--color-surface)] shadow-[-18px_0_48px_rgb(35_57_44/16%)]"
+        className="absolute inset-y-0 right-0 flex animate-garden-slide-in motion-reduce:animate-none w-full max-w-md flex-col bg-[var(--color-surface)] shadow-[-18px_0_48px_rgb(35_57_44/16%)]"
       >
         <header className="flex h-[73px] items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">
           <div>
