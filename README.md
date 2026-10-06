@@ -66,3 +66,28 @@ refresh, tab close, deployment restart, or attachment removal.
   health concerns.
 - Conversation history, document context, and model output length are bounded
   to keep requests focused and limit unnecessary inference usage.
+
+### Rate Limiting
+
+`/api/chat` and `/api/documents` are limited per client with a fixed-window
+counter in Upstash Redis, so one visitor cannot burn through the model token budget.
+Client IPs are never stored: each IP is hashed with HMAC-SHA256 using the secret
+`RATE_LIMIT_IP_SALT`, and only the hash is used in the Redis key. IPv6 clients
+are grouped by /64 so rotating addresses does not bypass the limit. Forwarded
+IP headers are trusted only on Vercel (or when
+`RATE_LIMIT_TRUST_PROXY_HEADERS=true`). Blocked requests receive `429` with a
+`Retry-After` header.
+
+Add these server-side values to your `.env` file
+(also add them in the Vercel project settings):
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `UPSTASH_REDIS_REST_URL` | required | Upstash Redis REST URL |
+| `UPSTASH_REDIS_REST_TOKEN` | required | Upstash Redis REST token |
+| `RATE_LIMIT_IP_SALT` | required | Secret, 16+ characters, used to hash IPs |
+| `RATE_LIMIT_ENABLED` | `true` | Set `false` for local development without Upstash |
+| `RATE_LIMIT_CHAT_LIMIT` / `RATE_LIMIT_CHAT_WINDOW_SECONDS` | `20` / `3600` | Chat requests per window |
+| `RATE_LIMIT_DOCUMENTS_LIMIT` / `RATE_LIMIT_DOCUMENTS_WINDOW_SECONDS` | `10` / `3600` | Uploads per window |
+| `RATE_LIMIT_FAIL_OPEN` | `false` | Allow requests if Upstash is unreachable (default rejects with `503`) |
+| `RATE_LIMIT_TRUST_PROXY_HEADERS` | `true` on Vercel | Trust `X-Forwarded-For` / `X-Real-IP` |

@@ -356,7 +356,12 @@ export function ChatExperience() {
       })
 
       if (!response.ok) {
-        throw new Error('Garden Mind could not answer right now. Please try again.')
+        throw new Error(
+          await getApiError(
+            response,
+            'Garden Mind could not answer right now. Please try again.',
+          ),
+        )
       }
 
       const data: unknown = await response.json()

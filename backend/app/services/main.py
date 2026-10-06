@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+
+# Load local .env values before the service modules read their configuration.
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .chat import router
