@@ -128,7 +128,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           <button
-            className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+            className="mt-8 flex items-center justify-start gap-2 rounded-[var(--radius-lg)] bg-[var(--color-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
             type="button"
           >
             <Icon name="plus" />
@@ -137,7 +137,7 @@ export function AppShell({ children }: AppShellProps) {
 
           <nav className="mt-8 space-y-1">
             <a
-              className="flex items-center gap-3 rounded-xl bg-[var(--color-sprout)] px-3 py-3 text-sm font-semibold text-[var(--color-forest)]"
+              className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--color-sprout)] px-3 py-3 text-sm font-semibold text-[var(--color-forest)]"
               href="#chat"
               onClick={closeSidebar}
             >
@@ -145,7 +145,7 @@ export function AppShell({ children }: AppShellProps) {
               Garden chat
             </a>
             <button
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              className="flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
               onClick={() => {
                 closeSidebar()
                 setIsArchiveOpen(true)
@@ -156,7 +156,7 @@ export function AppShell({ children }: AppShellProps) {
               Archived chats
             </button>
             <button
-              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              className="flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
               onClick={() => {
                 closeSidebar()
                 setIsLibraryOpen(true)
