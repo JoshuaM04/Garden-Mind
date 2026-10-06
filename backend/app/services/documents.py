@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from .rag import (
     DocumentProcessingError,
     extract_document_context,
 )
+from .rate_limit import documents_rate_limit
 
 router = APIRouter()
 
@@ -14,7 +15,11 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 READ_CHUNK_SIZE_BYTES = 64 * 1024
 
 
-@router.post("/documents", status_code=status.HTTP_200_OK)
+@router.post(
+    "/documents",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(documents_rate_limit)],
+)
 async def process_document(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(
