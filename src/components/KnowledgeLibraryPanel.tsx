@@ -86,16 +86,16 @@ export function KnowledgeLibraryPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-40">
-      <button
-        aria-label="Close knowledge library"
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
         className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
-        onClick={onClose}
-        type="button"
       />
       <aside
         aria-label="Knowledge library"
-        className="absolute inset-y-0 right-0 flex animate-garden-slide-in motion-reduce:animate-none w-full max-w-md flex-col bg-[var(--color-surface)] shadow-[-18px_0_48px_rgb(35_57_44/16%)]"
+        aria-modal="true"
+        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface)] shadow-[var(--shadow-float)] motion-reduce:animate-none"
+        role="dialog"
       >
         <header className="flex h-[73px] items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">
           <div>
@@ -108,7 +108,7 @@ export function KnowledgeLibraryPanel({
           </div>
           <button
             aria-label="Close knowledge library"
-            className="rounded-lg p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+            className="rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
             onClick={onClose}
             type="button"
           >
@@ -117,8 +117,8 @@ export function KnowledgeLibraryPanel({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
-          <div className="rounded-2xl border border-dashed border-[var(--color-sage)] bg-[var(--color-surface-muted)] p-5 text-center">
-            <span className="mx-auto grid size-11 place-items-center rounded-2xl bg-[var(--color-sprout)] text-[var(--color-forest)]">
+          <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-sage)] bg-[var(--color-surface-muted)] p-5 text-center">
+            <span className="mx-auto grid size-11 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-forest)]">
               <Icon name="upload" />
             </span>
             <h3 className="mt-3 text-sm font-bold text-[var(--color-forest)]">
@@ -137,7 +137,7 @@ export function KnowledgeLibraryPanel({
               type="file"
             />
             <button
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f3e30]"
+              className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f3e30]"
               onClick={() => inputRef.current?.click()}
               type="button"
             >
@@ -160,8 +160,8 @@ export function KnowledgeLibraryPanel({
             </div>
 
             {documents.length === 0 ? (
-              <div className="mt-4 rounded-xl border border-[var(--color-border)] bg-white px-4 py-5 text-center">
-                <span className="mx-auto grid size-9 place-items-center rounded-xl bg-[var(--color-surface-muted)] text-[var(--color-moss)]">
+              <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-4 py-5 text-center">
+                <span className="mx-auto grid size-9 place-items-center rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] text-[var(--color-moss)]">
                   <Icon name="leaf" />
                 </span>
                 <p className="mt-3 text-sm font-semibold text-[var(--color-forest)]">
@@ -176,10 +176,10 @@ export function KnowledgeLibraryPanel({
               <ul className="mt-4 space-y-2">
                 {documents.map((document) => (
                   <li
-                    className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-white p-3"
+                    className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-3"
                     key={document.id}
                   >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-sprout)] text-[var(--color-moss)]">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
                       <Icon name="document" />
                     </span>
                     <span className="min-w-0 flex-1">

@@ -427,12 +427,12 @@ export function ChatExperience() {
               <div className="mt-9 hidden w-full gap-3 text-left sm:grid sm:grid-cols-3">
                 {suggestions.map((suggestion) => (
                   <button
-                    className="group rounded-2xl border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                    className="group rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
                     key={suggestion.label}
                     onClick={() => setMessage(suggestion.prompt)}
                     type="button"
                   >
-                    <span className="mb-6 grid size-9 place-items-center rounded-xl bg-[var(--color-surface-muted)] text-[var(--color-moss)] transition group-hover:bg-[var(--color-sprout)] group-hover:text-[var(--color-forest)]">
+                    <span className="mb-6 grid size-9 place-items-center rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] text-[var(--color-moss)] transition group-hover:bg-[var(--color-sprout)] group-hover:text-[var(--color-forest)]">
                       <Icon name={suggestion.icon} />
                     </span>
                     <span className="block text-sm font-semibold text-[var(--color-forest)]">
@@ -455,12 +455,12 @@ export function ChatExperience() {
                   key={chatMessage.id}
                 >
                   {chatMessage.role === 'assistant' && (
-                    <span className="hidden size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                   )}
                   {chatMessage.role === 'assistant' ? (
-                    <div className="w-full max-w-full space-y-3 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
+                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
                       {chatMessage.sources && chatMessage.sources.length > 0 && (
                         <p className="border-t border-[var(--color-border)] pt-2 text-xs leading-5 text-[var(--color-ink-muted)]">
@@ -469,7 +469,7 @@ export function ChatExperience() {
                       )}
                     </div>
                   ) : (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-white">
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-white">
                       {chatMessage.content}
                     </p>
                   )}
@@ -477,12 +477,12 @@ export function ChatExperience() {
               ))}
               {isSending && (
                 <div aria-label="Garden Mind is typing" className="flex gap-0 sm:gap-3" role="status">
-                    <span className="hidden size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                     <div
                       aria-hidden="true"
-                      className="flex h-12 items-center gap-1 rounded-2xl rounded-bl-sm border border-[var(--color-border)] bg-white px-4"
+                      className="flex h-12 items-center gap-1 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-white px-4"
                     >
                       {[0, 1, 2].map((dot) => (
                         <span
@@ -500,11 +500,11 @@ export function ChatExperience() {
 
         <div className="mt-4 shrink-0 bg-[linear-gradient(to_bottom,transparent,rgba(251,252,247,0.96)_20%)] pb-2 pt-8">
           <form
-            className="rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-white p-2 shadow-[var(--shadow-float)]"
+            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-white p-2 shadow-[var(--shadow-float)]"
             onSubmit={sendMessage}
           >
             {attachment && (
-              <div className="mx-2 mt-2 flex items-center gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3 py-2 text-sm text-[var(--color-ink-muted)]">
+              <div className="mx-2 mt-2 flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] px-3 py-2 text-sm text-[var(--color-ink-muted)]">
                 <Icon name="document" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{attachment.name}</span>
@@ -562,7 +562,7 @@ export function ChatExperience() {
                 />
                 <button
                   aria-label="Attach a document"
-                  className="rounded-xl p-2.5 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-[var(--radius-md)] p-2.5 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={isUploading || attachment !== null}
                   onClick={() => attachmentInput.current?.click()}
                   type="button"
@@ -572,7 +572,7 @@ export function ChatExperience() {
               </div>
               <button
                 aria-label="Send message"
-                className="grid size-10 place-items-center rounded-xl bg-[var(--color-forest)] text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={
                   isSending ||
                   isUploading ||

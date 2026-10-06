@@ -9,6 +9,7 @@ type IconName =
   | 'leaf'
   | 'menu'
   | 'message'
+  | 'panel'
   | 'plus'
   | 'settings'
   | 'sparkle'
@@ -47,6 +48,12 @@ function Icon({ name }: { name: IconName }) {
       <>
         <path d="M20.5 11.5a8.5 8.5 0 0 1-9.25 8.47L5 21l1.25-5.1A8.5 8.5 0 1 1 20.5 11.5Z" />
         <path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01" />
+      </>
+    ),
+    panel: (
+      <>
+        <path d="M4 5h16v14H4z" />
+        <path d="M9.5 5v14" />
       </>
     ),
     plus: <path d="M12 5v14M5 12h14" />,
@@ -89,26 +96,47 @@ function Icon({ name }: { name: IconName }) {
 
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [activePanel, setActivePanel] = useState<'archive' | 'library' | null>(
+    null,
+  )
 
   const closeSidebar = () => setIsSidebarOpen(false)
+  const collapsed = isSidebarCollapsed
+  const hideWhenCollapsed = collapsed ? 'lg:hidden' : ''
+  const centerWhenCollapsed = collapsed ? 'lg:justify-center lg:px-0' : ''
+  const navItemClass = (isActive: boolean) =>
+    `flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-3 text-sm transition ${centerWhenCollapsed} ${
+      isActive
+        ? 'bg-[var(--color-sprout)] font-semibold text-[var(--color-forest)]'
+        : 'font-medium text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]'
+    }`
 
   return (
     <div className="h-svh overflow-hidden text-[var(--color-ink)]">
       <div className="relative flex h-full overflow-hidden bg-[var(--color-surface)]">
         <aside
           aria-label="Primary navigation"
-          className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-transform duration-300 lg:relative lg:w-64 lg:translate-x-0 ${
-            isSidebarOpen ? 'translate-x-0 shadow-[var(--shadow-float)]' : '-translate-x-full'
+          className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-all duration-300 lg:relative lg:translate-x-0 ${
+            collapsed ? 'lg:w-[4.5rem] lg:px-3' : 'lg:w-80'
+          } ${
+            isSidebarOpen ? 'translate-x-0 shadow-[var(--shadow-float)] lg:shadow-none' : '-translate-x-full'
           }`}
         >
-          <div className="flex items-center justify-between px-2 py-2">
-            <a className="flex items-center gap-3 text-[var(--color-forest)]" href="/">
-              <span className="grid size-10 place-items-center rounded-2xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
+          <div
+            className={`flex items-center justify-between px-2 py-2 ${
+              collapsed ? 'lg:flex-col lg:gap-3 lg:px-0' : ''
+            }`}
+          >
+            <a
+              aria-label="Garden Mind home"
+              className={`flex items-center gap-3 text-[var(--color-forest)] ${hideWhenCollapsed}`}
+              href="/"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)]">
                 <Icon name="leaf" />
               </span>
-              <span>
+              <span className={`whitespace-nowrap ${hideWhenCollapsed}`}>
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold leading-5">
                   Garden Mind
                 </span>
@@ -119,71 +147,116 @@ export function AppShell({ children }: AppShellProps) {
             </a>
             <button
               aria-label="Close navigation"
-              className="rounded-lg p-2 text-[var(--color-ink-muted)] lg:hidden"
+              className="rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] lg:hidden"
               onClick={closeSidebar}
               type="button"
             >
               <Icon name="x" />
             </button>
+            {collapsed ? (
+              <button
+                aria-expanded="false"
+                aria-label="Expand sidebar"
+                className="group hidden size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] lg:grid"
+                onClick={() => setIsSidebarCollapsed(false)}
+                title="Expand sidebar"
+                type="button"
+              >
+                <span className="group-hover:hidden group-focus-visible:hidden">
+                  <Icon name="leaf" />
+                </span>
+                <span className="hidden group-hover:block group-focus-visible:block">
+                  <Icon name="panel" />
+                </span>
+              </button>
+            ) : (
+              <button
+                aria-expanded="true"
+                aria-label="Collapse sidebar"
+                className="hidden rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] lg:block"
+                onClick={() => setIsSidebarCollapsed(true)}
+                title="Collapse sidebar"
+                type="button"
+              >
+                <Icon name="panel" />
+              </button>
+            )}
           </div>
 
           <button
-            className="mt-8 flex items-center justify-start gap-2 rounded-[var(--radius-lg)] bg-[var(--color-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+            aria-label="New conversation"
+            className={`mt-8 flex w-full items-center justify-start gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-3 ${
+              collapsed ? 'lg:justify-center lg:px-0' : ''
+            } text-sm font-semibold text-white transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
+            title="New conversation"
             type="button"
           >
             <Icon name="plus" />
-            New conversation
+            <span className={hideWhenCollapsed}>New conversation</span>
           </button>
 
           <nav className="mt-8 space-y-1">
             <a
-              className="flex items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--color-sprout)] px-3 py-3 text-sm font-semibold text-[var(--color-forest)]"
+              aria-current={activePanel === null ? 'page' : undefined}
+              className={navItemClass(activePanel === null)}
               href="#chat"
-              onClick={closeSidebar}
-            >
-              <Icon name="message" />
-              Garden chat
-            </a>
-            <button
-              className="flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              title="Garden chat"
               onClick={() => {
                 closeSidebar()
-                setIsArchiveOpen(true)
+                setActivePanel(null)
               }}
+            >
+              <Icon name="message" />
+              <span className={hideWhenCollapsed}>Garden chat</span>
+            </a>
+            <button
+              aria-current={activePanel === 'archive' ? 'page' : undefined}
+              className={navItemClass(activePanel === 'archive')}
+              onClick={() => {
+                closeSidebar()
+                setActivePanel('archive')
+              }}
+              title="Archived chats"
               type="button"
             >
               <Icon name="archive" />
-              Archived chats
+              <span className={hideWhenCollapsed}>Archived chats</span>
             </button>
             <button
-              className="flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-3 text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              aria-current={activePanel === 'library' ? 'page' : undefined}
+              className={navItemClass(activePanel === 'library')}
               onClick={() => {
                 closeSidebar()
-                setIsLibraryOpen(true)
+                setActivePanel('library')
               }}
+              title="Knowledge library"
               type="button"
             >
               <Icon name="book" />
-              Knowledge library
+              <span className={hideWhenCollapsed}>Knowledge library</span>
             </button>
           </nav>
 
           <div className="mt-auto border-t border-[var(--color-border)] pt-4">
             <button
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+              className={`flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-3 text-left text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] ${centerWhenCollapsed}`}
+              title="Preferences"
               type="button"
             >
               <Icon name="settings" />
-              Preferences
+              <span className={hideWhenCollapsed}>Preferences</span>
             </button>
             <button
-              className="mt-2 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)]"
+              className={`mt-2 flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)] ${
+                collapsed ? 'lg:justify-center lg:px-0' : ''
+              }`}
+              title="Your garden"
               type="button"
             >
               <span className="grid size-9 place-items-center rounded-full bg-[var(--color-gold)] font-[family-name:var(--font-display)] font-bold text-[var(--color-forest)]">
                 JM
               </span>
-              <span className="min-w-0 flex-1">
+              <span className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
                 <span className="block truncate text-sm font-semibold text-[var(--color-ink)]">
                   Your garden
                 </span>
@@ -191,7 +264,9 @@ export function AppShell({ children }: AppShellProps) {
                   Sign in to save chats
                 </span>
               </span>
-              <Icon name="chevron" />
+              <span className={hideWhenCollapsed}>
+                <Icon name="chevron" />
+              </span>
             </button>
           </div>
         </aside>
@@ -209,7 +284,7 @@ export function AppShell({ children }: AppShellProps) {
           <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 sm:px-6 lg:px-8">
             <button
               aria-label="Open navigation"
-              className="rounded-lg p-2 text-[var(--color-forest)] lg:hidden"
+              className="rounded-[var(--radius-md)] p-2 text-[var(--color-forest)] lg:hidden"
               onClick={() => setIsSidebarOpen(true)}
               type="button"
             >
@@ -220,7 +295,7 @@ export function AppShell({ children }: AppShellProps) {
               <span>Grounded guidance for your outdoor space</span>
             </div>
             <button
-              className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-forest)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]"
+              className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-forest)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]"
               type="button"
             >
               <Icon name="user" />
@@ -230,12 +305,12 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
         <ArchivedChatsPanel
-          isOpen={isArchiveOpen}
-          onClose={() => setIsArchiveOpen(false)}
+          isOpen={activePanel === 'archive'}
+          onClose={() => setActivePanel(null)}
         />
         <KnowledgeLibraryPanel
-          isOpen={isLibraryOpen}
-          onClose={() => setIsLibraryOpen(false)}
+          isOpen={activePanel === 'library'}
+          onClose={() => setActivePanel(null)}
         />
       </div>
     </div>

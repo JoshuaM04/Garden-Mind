@@ -80,16 +80,16 @@ export function ArchivedChatsPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-40">
-      <button
-        aria-label="Close archived chats"
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+      <div
+        aria-hidden="true"
         className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
-        onClick={onClose}
-        type="button"
       />
       <aside
         aria-label="Archived chats"
-        className="absolute inset-y-0 right-0 flex animate-garden-slide-in motion-reduce:animate-none w-full max-w-md flex-col bg-[var(--color-surface)] shadow-[-18px_0_48px_rgb(35_57_44/16%)]"
+        aria-modal="true"
+        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface)] shadow-[var(--shadow-float)] motion-reduce:animate-none"
+        role="dialog"
       >
         <header className="flex h-[73px] items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">
           <div>
@@ -102,7 +102,7 @@ export function ArchivedChatsPanel({
           </div>
           <button
             aria-label="Close archived chats"
-            className="rounded-lg p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
+            className="rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]"
             onClick={onClose}
             type="button"
           >
@@ -112,7 +112,7 @@ export function ArchivedChatsPanel({
 
         <div className="border-b border-[var(--color-border)] p-5 sm:p-6">
           <label
-            className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 text-[var(--color-ink-muted)] focus-within:border-[var(--color-moss)]"
+            className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-[var(--color-ink-muted)] focus-within:border-[var(--color-moss)]"
             htmlFor="search-chats"
           >
             <Icon name="search" />
@@ -133,11 +133,11 @@ export function ArchivedChatsPanel({
           <div className="space-y-1">
             {archivedChats.map((chat) => (
               <button
-                className="group flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                className="group flex w-full items-start gap-3 rounded-[var(--radius-md)] p-3 text-left transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
                 key={chat.title}
                 type="button"
               >
-                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--color-sprout)] text-[var(--color-moss)]">
+                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
                   <Icon name="message" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -156,9 +156,9 @@ export function ArchivedChatsPanel({
           </div>
         </div>
 
-        <div className="m-4 rounded-2xl bg-[var(--color-sprout)] p-4 sm:m-5">
+        <div className="m-4 rounded-[var(--radius-md)] bg-[var(--color-sprout)] p-4 sm:m-5">
           <div className="flex gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-forest)] text-[var(--color-sprout)]">
+            <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)]">
               <Icon name="user" />
             </span>
             <div>
