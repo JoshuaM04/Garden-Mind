@@ -3,11 +3,12 @@ import os
 import re
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from huggingface_hub import InferenceClient
 from pydantic import BaseModel, Field
 
 from .rag import MAX_DOCUMENT_CONTEXT_CHARACTERS
+from .rate_limit import chat_rate_limit
 from .search import (
     WEB_SEARCH_TOOL,
     parse_tool_arguments,
@@ -190,7 +191,7 @@ def generate_reply(messages: list) -> str:
     return complete(messages, False).choices[0].message.content
 
 
-@router.post('/chat')
+@router.post('/chat', dependencies=[Depends(chat_rate_limit)])
 def chat(item: ChatRequest):
     if is_prompt_injection(item.message):
         return { "assistant message": PROMPT_INJECTION_RESPONSE }
