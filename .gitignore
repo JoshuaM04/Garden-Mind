@@ -28,3 +28,4 @@ dist-ssr
 .agents/
 settings.json
 skills-lock.json
+.venv

@@ -94,7 +94,7 @@ Add these server-side values to your `.env` file
 
 ### Accounts and Plant Collection
 
-Users sign in with Supabase Auth and keep a personal plant collection in the `plants` table. Row-level security restricts every row to its owner, so the browser can use the publishable key safely. The schema lives in `supabase/migrations/`; apply it in the Supabase SQL editor (or with the Supabase CLI) before using the "My plants" panel.
+Users sign in with Supabase Auth and keep a personal plant collection in the `plants` table. Row-level security restricts every row to its owner, so the browser can use the publishable key safely. When a signed-in user chats, up to 20 plant names and growing conditions are sent as context; private notes are not included. The schema lives in `supabase/migrations/`; apply it in the Supabase SQL editor (or with the Supabase CLI) before using the "My plants" panel.
 
 | Variable | Where | Purpose |
 | --- | --- | --- |

@@ -6,6 +6,8 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react'
+import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 
 type IconName =
   | 'arrow'
@@ -28,6 +30,16 @@ interface DocumentUploadResponse {
   status: 'processed'
   truncated: boolean
 }
+
+interface PlantContext {
+  nickname: string
+  species: string | null
+  location: 'indoor' | 'outdoor'
+  sun_exposure: 'full_sun' | 'partial_sun' | 'bright_indirect' | 'low_light'
+  planted_on: string | null
+}
+
+const MAX_PLANTS_FOR_CHAT = 20
 
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
@@ -240,6 +252,7 @@ function Icon({ name }: { name: IconName }) {
 }
 
 export function ChatExperience() {
+  const { session } = useAuth()
   const [message, setMessage] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const [documentContext, setDocumentContext] = useState<string | null>(null)
@@ -344,6 +357,26 @@ export function ChatExperience() {
     setIsSending(true)
 
     try {
+      let plants: PlantContext[] = []
+      let plantsLoaded = false
+      if (session) {
+        const { data, error: plantsError } = await supabase
+          .from('plants')
+          .select('nickname, species, location, sun_exposure, planted_on')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(MAX_PLANTS_FOR_CHAT)
+
+        if (plantsError) {
+          setErrorMessage(
+            `Saved plant context is unavailable, so this answer won't be personalized. ${plantsError.message}`,
+          )
+        } else {
+          plants = data ?? []
+          plantsLoaded = true
+        }
+      }
+
       const response = await fetch(chatEndpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -352,6 +385,8 @@ export function ChatExperience() {
           history: conversation,
           document_context: documentContext,
           document_filename: attachment?.name,
+          plants,
+          plants_loaded: plantsLoaded,
         }),
       })
 
@@ -591,6 +626,10 @@ export function ChatExperience() {
             </p>
           )}
           <p className="mt-3 text-center text-xs text-[var(--color-ink-faint)]">
+            When signed in, your saved plant names and growing conditions help
+            personalize answers. Private notes are not included.
+          </p>
+          <p className="mt-2 text-center text-xs text-[var(--color-ink-faint)]">
             Garden Mind can make mistakes. Verify plant safety and local growing
             guidance.
           </p>
