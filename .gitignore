@@ -30,3 +30,7 @@ settings.json
 skills-lock.json
 .venv
 .github/prompts/
+
+# Python bytecode
+__pycache__/
+*.pyc

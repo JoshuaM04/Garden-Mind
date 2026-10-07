@@ -203,15 +203,6 @@ export function KnowledgeLibraryPanel({
           </div>
         </div>
 
-        <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-4 sm:px-6">
-          <p className="text-xs leading-5 text-[var(--color-ink-muted)]">
-            <strong className="font-semibold text-[var(--color-forest)]">
-              Setup note:
-            </strong>{' '}
-            uploaded files are local UI state until the FastAPI document pipeline
-            is connected.
-          </p>
-        </div>
       </aside>
     </div>
   )

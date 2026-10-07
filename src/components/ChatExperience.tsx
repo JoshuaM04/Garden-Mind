@@ -8,6 +8,12 @@ import {
 } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
+import {
+  createChat,
+  loadMessages,
+  saveMessage,
+  titleFromMessage,
+} from '../lib/chats'
 
 type IconName =
   | 'arrow'
@@ -136,12 +142,12 @@ function formatAssistantMessage(content: string): ReactNode {
 
     blocks.push(
       listType === 'unordered' ? (
-        <ul className="list-disc space-y-1 pl-5" key={`list-${blocks.length}`}>
+        <ul className="list-disc space-y-1.5 pl-5" key={`list-${blocks.length}`}>
           {items}
         </ul>
       ) : (
         <ol
-          className="list-decimal space-y-1 pl-5"
+          className="list-decimal space-y-1.5 pl-5"
           key={`list-${blocks.length}`}
           start={listStart}
         >
@@ -155,6 +161,24 @@ function formatAssistantMessage(content: string): ReactNode {
   }
 
   for (const line of content.split('\n')) {
+    const headingMatch =
+      line.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/) ??
+      line.match(/^\s*\*\*([^*]+?):?\*\*:?\s*$/)
+
+    if (headingMatch) {
+      flushParagraph()
+      flushList()
+      blocks.push(
+        <h3
+          className="mt-1 text-[0.95rem] font-semibold tracking-tight text-[var(--color-forest)] first:mt-0"
+          key={`heading-${blocks.length}`}
+        >
+          {headingMatch[1].replace(/\*\*/g, '')}
+        </h3>,
+      )
+      continue
+    }
+
     const unorderedMatch = line.match(/^\s*[-*+]\s+(.+)$/)
     const orderedMatch = line.match(/^\s*(\d+)[.)]\s+(.+)$/)
 
@@ -251,8 +275,17 @@ function Icon({ name }: { name: IconName }) {
   )
 }
 
-export function ChatExperience() {
+interface ChatExperienceProps {
+  initialChatId?: string | null
+  onChatCreated?: (chatId: string) => void
+}
+
+export function ChatExperience({
+  initialChatId = null,
+  onChatCreated,
+}: ChatExperienceProps) {
   const { session } = useAuth()
+  const chatId = useRef<string | null>(initialChatId)
   const [message, setMessage] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const [documentContext, setDocumentContext] = useState<string | null>(null)
@@ -295,6 +328,62 @@ export function ChatExperience() {
   }
 
   useEffect(() => stopTyping, [])
+
+  useEffect(() => {
+    if (!initialChatId || !session) {
+      return
+    }
+
+    let cancelled = false
+    loadMessages(initialChatId)
+      .then((saved) => {
+        if (!cancelled) {
+          setConversation(
+            saved.map((item) => ({
+              id: item.id,
+              content: item.content,
+              role: item.role,
+              sources: item.sources ?? undefined,
+            })),
+          )
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? `Could not load this chat. ${error.message}`
+              : 'Could not load this chat.',
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialChatId, session])
+
+  async function persist(
+    item: { role: 'assistant' | 'user'; content: string; sources?: string[] },
+  ) {
+    if (!session) {
+      return
+    }
+
+    try {
+      if (!chatId.current) {
+        chatId.current = await createChat(titleFromMessage(item.content))
+        onChatCreated?.(chatId.current)
+      }
+      await saveMessage(chatId.current, item)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? `This chat could not be saved. ${error.message}`
+          : 'This chat could not be saved.',
+      )
+    }
+  }
 
   useEffect(() => {
     const messagePane = conversationMessages.current
@@ -384,6 +473,7 @@ export function ChatExperience() {
       ...currentConversation,
       { id: Date.now(), content, role: 'user' },
     ])
+    const savedUserMessage = persist({ role: 'user', content })
     stopTyping()
     setMessage('')
     setErrorMessage(null)
@@ -438,6 +528,12 @@ export function ChatExperience() {
         throw new Error('Garden Mind returned an unexpected response. Please try again.')
       }
 
+      await savedUserMessage
+      void persist({
+        role: 'assistant',
+        content: data['assistant message'],
+        sources: data.sources,
+      })
       setConversation((currentConversation) => [
         ...currentConversation,
         {
@@ -528,7 +624,7 @@ export function ChatExperience() {
                     </span>
                   )}
                   {chatMessage.role === 'assistant' ? (
-                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] glass px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
+                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] glass px-5 py-4 font-[family-name:var(--font-chat)] text-sm leading-6 text-[var(--color-ink)] [&_li]:marker:text-[var(--color-moss)] [&_strong]:font-bold [&_strong]:text-[var(--color-forest)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
                       {chatMessage.sources && chatMessage.sources.length > 0 && (
                         <p className="border-t border-[var(--color-border)] pt-2 text-xs leading-5 text-[var(--color-ink-muted)]">
@@ -537,7 +633,7 @@ export function ChatExperience() {
                       )}
                     </div>
                   ) : (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[linear-gradient(135deg,var(--color-forest),var(--color-moss))] shadow-[var(--shadow-float)] px-4 py-3 text-sm leading-6 text-[var(--color-on-forest)]">
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[linear-gradient(135deg,var(--color-forest),var(--color-moss))] shadow-[var(--shadow-float)] px-4 py-3 font-[family-name:var(--font-chat)] text-sm leading-6 text-[var(--color-on-forest)]">
                       {chatMessage.content}
                     </p>
                   )}

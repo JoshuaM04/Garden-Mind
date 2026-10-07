@@ -23,6 +23,9 @@ type IconName =
 
 interface AppShellProps {
   children: ReactNode
+  onChatDeleted: (chatId: string) => void
+  onNewChat: () => void
+  onOpenChat: (chatId: string) => void
 }
 
 function Icon({ name }: { name: IconName }) {
@@ -99,7 +102,12 @@ function Icon({ name }: { name: IconName }) {
   )
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({
+  children,
+  onChatDeleted,
+  onNewChat,
+  onOpenChat,
+}: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<
@@ -197,6 +205,11 @@ export function AppShell({ children }: AppShellProps) {
           <button
             aria-label="New conversation"
             className={`mt-8 flex w-full items-center justify-start gap-2 overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-forest)] px-[13px] py-3 text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
+            onClick={() => {
+              closeSidebar()
+              setActivePanel(null)
+              onNewChat()
+            }}
             title="New conversation"
             type="button"
           >
@@ -322,7 +335,13 @@ export function AppShell({ children }: AppShellProps) {
         </main>
         <ArchivedChatsPanel
           isOpen={activePanel === 'archive'}
+          onChatDeleted={onChatDeleted}
           onClose={() => setActivePanel(null)}
+          onOpenChat={(id) => {
+            setActivePanel(null)
+            onOpenChat(id)
+          }}
+          onSignIn={() => setActivePanel('settings')}
         />
         <PlantsPanel
           isOpen={activePanel === 'plants'}

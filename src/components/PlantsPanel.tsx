@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { GlassDatePicker, GlassSelect } from './GlassPickers'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 interface PlantsPanelProps {
@@ -211,33 +212,29 @@ function PlantCollection({ userId }: { userId: string }) {
           value={species}
         />
         <div className="grid grid-cols-2 gap-3">
-          <select
-            aria-label="Location"
-            className={inputClass}
-            onChange={(event) => setLocation(event.target.value as Location)}
+          <GlassSelect
+            label="Location"
+            onChange={setLocation}
+            options={[
+              { value: 'indoor', label: 'Indoor' },
+              { value: 'outdoor', label: 'Outdoor' },
+            ]}
             value={location}
-          >
-            <option value="indoor">Indoor</option>
-            <option value="outdoor">Outdoor</option>
-          </select>
-          <select
-            aria-label="Sun exposure"
-            className={inputClass}
-            onChange={(event) => setSunExposure(event.target.value as SunExposure)}
+          />
+          <GlassSelect
+            label="Sun exposure"
+            onChange={setSunExposure}
+            options={Object.entries(SUN_LABELS).map(([value, label]) => ({
+              value: value as SunExposure,
+              label,
+            }))}
             value={sunExposure}
-          >
-            {Object.entries(SUN_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
-        <input
-          aria-label="Date planted"
-          className={inputClass}
-          onChange={(event) => setPlantedOn(event.target.value)}
-          type="date"
+        <GlassDatePicker
+          label="Date planted"
+          onChange={setPlantedOn}
+          placeholder="Date planted"
           value={plantedOn}
         />
         <textarea
@@ -358,13 +355,6 @@ export function PlantsPanel({ isOpen, onClose }: PlantsPanelProps) {
           )}
         </div>
 
-        {session && (
-          <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3 sm:px-6">
-            <span className="block truncate text-xs text-[var(--color-ink-muted)]">
-              {session.user.email}
-            </span>
-          </div>
-        )}
       </aside>
     </div>
   )
