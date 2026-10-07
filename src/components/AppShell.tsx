@@ -4,7 +4,8 @@ import { KnowledgeLibraryPanel } from './KnowledgeLibraryPanel'
 import { PlantsPanel } from './PlantsPanel'
 import { SettingsPanel } from './SettingsPanel'
 import { useAuth } from '../lib/AuthContext'
-import { getInitials } from '../lib/profile'
+import { getAvatarUrl } from '../lib/profile'
+import { Avatar } from './Avatar'
 
 type IconName =
   | 'archive'
@@ -109,10 +110,16 @@ export function AppShell({ children }: AppShellProps) {
 
   const closeSidebar = () => setIsSidebarOpen(false)
   const collapsed = isSidebarCollapsed
-  const hideWhenCollapsed = collapsed ? 'lg:hidden' : ''
-  const centerWhenCollapsed = collapsed ? 'lg:justify-center lg:px-0' : ''
+  // Layout never changes between states: the aside clips the labels while its
+  // width animates, and the labels only fade, so nothing shifts vertically.
+  const fadeLabel = `whitespace-nowrap transition-opacity ease-out ${
+    collapsed
+      ? 'lg:pointer-events-none lg:opacity-0 lg:duration-150'
+      : 'duration-300 lg:delay-150'
+  }`
+
   const navItemClass = (isActive: boolean) =>
-    `flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-3 text-sm transition ${centerWhenCollapsed} ${
+    `flex w-full items-center gap-3 overflow-hidden rounded-[var(--radius-md)] px-[13px] py-3 text-sm transition ${
       isActive
         ? 'bg-[var(--color-sprout)] font-semibold text-[var(--color-forest)]'
         : 'font-medium text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)]'
@@ -120,29 +127,25 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="h-svh overflow-hidden text-[var(--color-ink)]">
-      <div className="relative flex h-full overflow-hidden bg-[var(--color-surface)]">
+      <div className="relative flex h-full gap-3 overflow-hidden p-0 lg:p-3">
         <aside
           aria-label="Primary navigation"
-          className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-all duration-300 lg:relative lg:translate-x-0 ${
-            collapsed ? 'lg:w-[4.5rem] lg:px-3' : 'lg:w-80'
+          className={`glass fixed inset-y-0 left-0 z-30 flex w-72 flex-col overflow-hidden border-r border-[var(--color-border)] px-3 py-4 transition-[width,transform] duration-300 ease-in-out lg:relative lg:rounded-[var(--radius-lg)] lg:border lg:translate-x-0 ${
+            collapsed ? 'lg:w-[4.5rem]' : 'lg:w-80'
           } ${
             isSidebarOpen ? 'translate-x-0 shadow-[var(--shadow-float)] lg:shadow-none' : '-translate-x-full'
           }`}
         >
-          <div
-            className={`flex items-center justify-between px-2 py-2 ${
-              collapsed ? 'lg:flex-col lg:gap-3 lg:px-0' : ''
-            }`}
-          >
+          <div className="relative flex items-center justify-between px-[3px] py-2">
             <a
               aria-label="Garden Mind home"
-              className={`flex items-center gap-3 text-[var(--color-forest)] ${hideWhenCollapsed}`}
+              className="flex items-center gap-3 text-[var(--color-forest)]"
               href="/"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)]">
+              <span className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)]">
                 <Icon name="leaf" />
               </span>
-              <span className={`whitespace-nowrap ${hideWhenCollapsed}`}>
+              <span className={fadeLabel}>
                 <span className="block font-[family-name:var(--font-display)] text-xl font-bold leading-5">
                   Garden Mind
                 </span>
@@ -159,46 +162,46 @@ export function AppShell({ children }: AppShellProps) {
             >
               <Icon name="x" />
             </button>
-            {collapsed ? (
-              <button
-                aria-expanded="false"
-                aria-label="Expand sidebar"
-                className="group hidden size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] lg:grid"
-                onClick={() => setIsSidebarCollapsed(false)}
-                title="Expand sidebar"
-                type="button"
-              >
-                <span className="group-hover:hidden group-focus-visible:hidden">
-                  <Icon name="leaf" />
-                </span>
-                <span className="hidden group-hover:block group-focus-visible:block">
-                  <Icon name="panel" />
-                </span>
-              </button>
-            ) : (
-              <button
-                aria-expanded="true"
-                aria-label="Collapse sidebar"
-                className="hidden rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] lg:block"
-                onClick={() => setIsSidebarCollapsed(true)}
-                title="Collapse sidebar"
-                type="button"
-              >
+            <button
+              aria-expanded={!collapsed}
+              aria-label="Collapse sidebar"
+              className={`hidden rounded-[var(--radius-md)] p-2 text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] lg:block ${
+                collapsed ? 'lg:pointer-events-none lg:opacity-0' : ''
+              }`}
+              onClick={() => setIsSidebarCollapsed(true)}
+              tabIndex={collapsed ? -1 : 0}
+              title="Collapse sidebar"
+              type="button"
+            >
+              <Icon name="panel" />
+            </button>
+            <button
+              aria-expanded={!collapsed}
+              aria-label="Expand sidebar"
+              className={`group absolute left-[3px] hidden size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)] transition-[opacity,background-color] duration-300 hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] lg:grid ${
+                collapsed ? 'lg:opacity-100' : 'lg:pointer-events-none lg:opacity-0'
+              }`}
+              onClick={() => setIsSidebarCollapsed(false)}
+              tabIndex={collapsed ? 0 : -1}
+              title="Expand sidebar"
+              type="button"
+            >
+              <span className="group-hover:hidden group-focus-visible:hidden">
+                <Icon name="leaf" />
+              </span>
+              <span className="hidden group-hover:block group-focus-visible:block">
                 <Icon name="panel" />
-              </button>
-            )}
+              </span>
+            </button>
           </div>
-
           <button
             aria-label="New conversation"
-            className={`mt-8 flex w-full items-center justify-start gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-3 ${
-              collapsed ? 'lg:justify-center lg:px-0' : ''
-            } text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
+            className={`mt-8 flex w-full items-center justify-start gap-2 overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-forest)] px-[13px] py-3 text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
             title="New conversation"
             type="button"
           >
             <Icon name="plus" />
-            <span className={hideWhenCollapsed}>New conversation</span>
+            <span className={fadeLabel}>New conversation</span>
           </button>
 
           <nav className="mt-8 space-y-1">
@@ -213,7 +216,7 @@ export function AppShell({ children }: AppShellProps) {
               }}
             >
               <Icon name="message" />
-              <span className={hideWhenCollapsed}>Garden chat</span>
+              <span className={fadeLabel}>Garden chat</span>
             </a>
             <button
               aria-current={activePanel === 'plants' ? 'page' : undefined}
@@ -226,7 +229,7 @@ export function AppShell({ children }: AppShellProps) {
               type="button"
             >
               <Icon name="leaf" />
-              <span className={hideWhenCollapsed}>My plants</span>
+              <span className={fadeLabel}>My plants</span>
             </button>
             <button
               aria-current={activePanel === 'archive' ? 'page' : undefined}
@@ -239,7 +242,7 @@ export function AppShell({ children }: AppShellProps) {
               type="button"
             >
               <Icon name="archive" />
-              <span className={hideWhenCollapsed}>Archived chats</span>
+              <span className={fadeLabel}>Archived chats</span>
             </button>
             <button
               aria-current={activePanel === 'library' ? 'page' : undefined}
@@ -252,15 +255,13 @@ export function AppShell({ children }: AppShellProps) {
               type="button"
             >
               <Icon name="book" />
-              <span className={hideWhenCollapsed}>Knowledge library</span>
+              <span className={fadeLabel}>Knowledge library</span>
             </button>
           </nav>
 
           <div className="mt-auto border-t border-[var(--color-border)] pt-4">
             <button
-              className={`flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)] ${
-                collapsed ? 'lg:justify-center lg:px-0' : ''
-              }`}
+              className={`flex w-full items-center gap-3 overflow-hidden rounded-[var(--radius-md)] px-[5px] py-2 text-left transition hover:bg-[var(--color-surface-muted)]`}
               onClick={() => {
                 closeSidebar()
                 setActivePanel('settings')
@@ -268,10 +269,17 @@ export function AppShell({ children }: AppShellProps) {
               title={session ? 'Profile and settings' : 'Sign in'}
               type="button"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--color-gold)] font-[family-name:var(--font-display)] font-bold text-[#21342b]">
-                {session ? getInitials(session.user.email) : <Icon name="user" />}
-              </span>
-              <span className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
+              {session ? (
+                <Avatar
+                  email={session.user.email}
+                  imageUrl={getAvatarUrl(session.user)}
+                />
+              ) : (
+                <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--glass-edge)] bg-[image:var(--avatar-bg)] text-[var(--avatar-fg)]">
+                  <Icon name="user" />
+                </span>
+              )}
+              <span className={`min-w-0 flex-1 ${fadeLabel}`}>
                 <span className="block truncate text-sm font-semibold text-[var(--color-ink)]">
                   {session ? 'Profile & settings' : 'Sign in'}
                 </span>
@@ -279,7 +287,7 @@ export function AppShell({ children }: AppShellProps) {
                   {session?.user.email ?? 'Save plants and get reminders'}
                 </span>
               </span>
-              <span className={hideWhenCollapsed}>
+              <span className={fadeLabel}>
                 <Icon name="chevron" />
               </span>
             </button>
@@ -289,13 +297,13 @@ export function AppShell({ children }: AppShellProps) {
         {isSidebarOpen && (
           <button
             aria-label="Close navigation"
-            className="fixed inset-0 z-20 bg-[rgb(33_52_43/35%)] lg:hidden"
+            className="fixed inset-0 z-20 bg-[rgb(20_40_30/40%)] backdrop-blur-sm lg:hidden"
             onClick={closeSidebar}
             type="button"
           />
         )}
 
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <main className="glass flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-[var(--color-border)] lg:rounded-[var(--radius-lg)] lg:border">
           <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 sm:px-6 lg:px-8">
             <button
               aria-label="Open navigation"

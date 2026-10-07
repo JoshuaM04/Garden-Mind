@@ -8,7 +8,7 @@
 
   html {
     font-family: var(--font-sans);
-    background: var(--color-canvas);
+    background: var(--aurora-base);
     color: var(--color-ink);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -16,6 +16,43 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    inset: -25%;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  body::before {
+    background: linear-gradient(
+      var(--flow-angle),
+      var(--aurora-1),
+      var(--aurora-2) 35%,
+      var(--aurora-4) 65%,
+      var(--aurora-3)
+    );
+    animation: garden-flow 60s linear infinite;
+  }
+
+  body::after {
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      var(--aurora-sheen) 50%,
+      transparent 65%
+    );
+    background-size: 220% 100%;
+    animation: garden-sheen 22s ease-in-out infinite alternate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after {
+      animation: none;
+    }
+  }
   body {
     min-width: 320px;
     min-height: 100svh;

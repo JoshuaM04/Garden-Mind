@@ -28,7 +28,7 @@ const SUN_LABELS: Record<SunExposure, string> = {
 }
 
 const inputClass =
-  'h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-3 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-moss)]'
+  'h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] glass px-3 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-moss)]'
 
 const primaryButtonClass =
   'inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] disabled:cursor-not-allowed disabled:opacity-50'
@@ -266,14 +266,14 @@ function PlantCollection({ userId }: { userId: string }) {
       </div>
 
       {plants.length === 0 ? (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-5 text-center text-xs leading-5 text-[var(--color-ink-muted)]">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] glass px-4 py-5 text-center text-xs leading-5 text-[var(--color-ink-muted)]">
           No plants yet. Add your first one above.
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
           {plants.map((plant) => (
             <li
-              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
+              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-3"
               key={plant.id}
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
@@ -316,12 +316,12 @@ export function PlantsPanel({ isOpen, onClose }: PlantsPanelProps) {
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
+        className="absolute inset-0 animate-garden-fade-in bg-[rgb(20_40_30/40%)] backdrop-blur-sm motion-reduce:animate-none"
       />
       <aside
         aria-label="My plants"
         aria-modal="true"
-        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface)] shadow-[var(--shadow-float)] motion-reduce:animate-none"
+        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] glass-strong motion-reduce:animate-none"
         role="dialog"
       >
         <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">

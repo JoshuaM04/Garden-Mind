@@ -263,6 +263,38 @@ export function ChatExperience() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const attachmentInput = useRef<HTMLInputElement>(null)
   const conversationMessages = useRef<HTMLDivElement>(null)
+  const composerInput = useRef<HTMLTextAreaElement>(null)
+  const typingTimer = useRef<number | null>(null)
+
+  function stopTyping() {
+    if (typingTimer.current !== null) {
+      window.clearInterval(typingTimer.current)
+      typingTimer.current = null
+    }
+  }
+
+  // Types the prompt into the composer one character at a time.
+  function typePrompt(prompt: string) {
+    stopTyping()
+    composerInput.current?.focus()
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setMessage(prompt)
+      return
+    }
+
+    setMessage('')
+    let index = 0
+    typingTimer.current = window.setInterval(() => {
+      index += 1
+      setMessage(prompt.slice(0, index))
+      if (index >= prompt.length) {
+        stopTyping()
+      }
+    }, 22)
+  }
+
+  useEffect(() => stopTyping, [])
 
   useEffect(() => {
     const messagePane = conversationMessages.current
@@ -352,6 +384,7 @@ export function ChatExperience() {
       ...currentConversation,
       { id: Date.now(), content, role: 'user' },
     ])
+    stopTyping()
     setMessage('')
     setErrorMessage(null)
     setIsSending(true)
@@ -434,13 +467,13 @@ export function ChatExperience() {
       <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
         <div
           aria-label="Conversation messages"
-          className="min-h-0 flex-1 overflow-y-auto pr-2"
+          className="min-h-0 flex-1 overflow-y-auto -mx-8 -mb-10 px-8 pb-10"
           ref={conversationMessages}
         >
           {conversation.length === 0 ? (
             <div className="mx-auto flex w-full max-w-2xl flex-col items-center pt-3 text-center sm:pt-14">
               <div className="relative mb-7 grid size-20 place-items-center rounded-full border border-[var(--color-sage)] bg-[var(--color-sprout)] text-[var(--color-forest)]">
-                <span className="grid size-12 place-items-center rounded-full bg-[var(--color-forest)] text-[var(--color-sprout)]">
+                <span className="grid size-12 place-items-center rounded-full bg-[var(--color-forest)] text-[var(--color-on-forest)]">
                   <Icon name="sparkle" />
                 </span>
                 <span
@@ -462,9 +495,9 @@ export function ChatExperience() {
               <div className="mt-9 hidden w-full gap-3 text-left sm:grid sm:grid-cols-3">
                 {suggestions.map((suggestion) => (
                   <button
-                    className="group rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                    className="group rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-[var(--color-moss)] hover:bg-[var(--glass-bg-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
                     key={suggestion.label}
-                    onClick={() => setMessage(suggestion.prompt)}
+                    onClick={() => typePrompt(suggestion.prompt)}
                     type="button"
                   >
                     <span className="mb-6 grid size-9 place-items-center rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] text-[var(--color-moss)] transition group-hover:bg-[var(--color-sprout)] group-hover:text-[var(--color-forest)]">
@@ -484,18 +517,18 @@ export function ChatExperience() {
             <div aria-busy={isSending} className="mx-auto max-w-3xl space-y-6 pb-6">
               {conversation.map((chatMessage) => (
                 <div
-                  className={`flex gap-0 sm:gap-3 ${
+                  className={`animate-garden-rise motion-reduce:animate-none flex gap-0 sm:gap-3 ${
                     chatMessage.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                   key={chatMessage.id}
                 >
                   {chatMessage.role === 'assistant' && (
-                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                   )}
                   {chatMessage.role === 'assistant' ? (
-                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
+                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] glass px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
                       {chatMessage.sources && chatMessage.sources.length > 0 && (
                         <p className="border-t border-[var(--color-border)] pt-2 text-xs leading-5 text-[var(--color-ink-muted)]">
@@ -504,7 +537,7 @@ export function ChatExperience() {
                       )}
                     </div>
                   ) : (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-[var(--color-on-forest)]">
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[linear-gradient(135deg,var(--color-forest),var(--color-moss))] shadow-[var(--shadow-float)] px-4 py-3 text-sm leading-6 text-[var(--color-on-forest)]">
                       {chatMessage.content}
                     </p>
                   )}
@@ -512,12 +545,12 @@ export function ChatExperience() {
               ))}
               {isSending && (
                 <div aria-label="Garden Mind is typing" className="flex gap-0 sm:gap-3" role="status">
-                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] sm:grid">
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)] sm:grid">
                       <Icon name="sparkle" />
                     </span>
                     <div
                       aria-hidden="true"
-                      className="flex h-12 items-center gap-1 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-[var(--color-card)] px-4"
+                      className="flex h-12 items-center gap-1 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] glass px-4"
                     >
                       {[0, 1, 2].map((dot) => (
                         <span
@@ -533,9 +566,9 @@ export function ChatExperience() {
           )}
         </div>
 
-        <div className="mt-4 shrink-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_srgb,var(--color-surface)_96%,transparent)_20%)] pb-2 pt-8">
+        <div className="mt-4 shrink-0 pb-2 pt-8">
           <form
-            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-2 shadow-[var(--shadow-float)]"
+            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] glass p-2 transition focus-within:border-[var(--color-moss)] focus-within:shadow-[0_0_0_3px_var(--color-sprout)]"
             onSubmit={sendMessage}
           >
             {attachment && (
@@ -555,7 +588,7 @@ export function ChatExperience() {
                 </span>
                 <button
                   aria-label={`Remove ${attachment.name}`}
-                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-[var(--glass-bg-strong)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={isUploading}
                   onClick={removeAttachment}
                   type="button"
@@ -569,7 +602,11 @@ export function ChatExperience() {
               <textarea
                 className="block max-h-36 min-h-14 w-full resize-none border-0 bg-transparent py-2 text-[15px] leading-6 text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
                 id="garden-question"
-                onChange={(event) => setMessage(event.target.value)}
+                ref={composerInput}
+                onChange={(event) => {
+                  stopTyping()
+                  setMessage(event.target.value)
+                }}
                 onKeyDown={(event) => {
                   if (
                     event.key === 'Enter' &&
@@ -626,10 +663,6 @@ export function ChatExperience() {
             </p>
           )}
           <p className="mt-3 text-center text-xs text-[var(--color-ink-faint)]">
-            When signed in, your saved plant names and growing conditions help
-            personalize answers. Private notes are not included.
-          </p>
-          <p className="mt-2 text-center text-xs text-[var(--color-ink-faint)]">
             Garden Mind can make mistakes. Verify plant safety and local growing
             guidance.
           </p>

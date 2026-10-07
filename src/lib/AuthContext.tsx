@@ -15,7 +15,11 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<string | null>
   signUp: (email: string, password: string) => Promise<string | null>
   signOut: () => Promise<void>
+  uploadAvatar: (image: Blob) => Promise<string | null>
+  removeAvatar: () => Promise<string | null>
 }
+
+const AVATAR_BUCKET = 'avatars'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
@@ -62,6 +66,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         await supabase.auth.signOut()
+      },
+      uploadAvatar: async (image) => {
+        const userId = session?.user.id
+        if (!userId) {
+          return 'Sign in to upload a profile picture.'
+        }
+        const path = `${userId}/avatar.jpg`
+        const { error: uploadError } = await supabase.storage
+          .from(AVATAR_BUCKET)
+          .upload(path, image, { contentType: 'image/jpeg', upsert: true })
+        if (uploadError) {
+          return uploadError.message
+        }
+        const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+        // The version query busts the cache since the path never changes.
+        const { error } = await supabase.auth.updateUser({
+          data: { avatar_url: `${data.publicUrl}?v=${Date.now()}` },
+        })
+        return error?.message ?? null
+      },
+      removeAvatar: async () => {
+        const userId = session?.user.id
+        if (!userId) {
+          return null
+        }
+        await supabase.storage.from(AVATAR_BUCKET).remove([`${userId}/avatar.jpg`])
+        const { error } = await supabase.auth.updateUser({
+          data: { avatar_url: null },
+        })
+        return error?.message ?? null
       },
     }),
     [session, isLoading],
