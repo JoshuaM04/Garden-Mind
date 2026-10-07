@@ -112,7 +112,7 @@ export function ArchivedChatsPanel({
 
         <div className="border-b border-[var(--color-border)] p-5 sm:p-6">
           <label
-            className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-[var(--color-ink-muted)] focus-within:border-[var(--color-moss)]"
+            className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-3 text-[var(--color-ink-muted)] focus-within:border-[var(--color-moss)]"
             htmlFor="search-chats"
           >
             <Icon name="search" />

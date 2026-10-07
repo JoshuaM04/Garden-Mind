@@ -28,10 +28,10 @@ const SUN_LABELS: Record<SunExposure, string> = {
 }
 
 const inputClass =
-  'h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-moss)]'
+  'h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-3 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-moss)]'
 
 const primaryButtonClass =
-  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] disabled:cursor-not-allowed disabled:opacity-50'
 
 function Icon({ name }: { name: 'leaf' | 'trash' | 'x' }) {
   const paths: Record<'leaf' | 'trash' | 'x', ReactNode> = {
@@ -61,7 +61,7 @@ function Icon({ name }: { name: 'leaf' | 'trash' | 'x' }) {
   )
 }
 
-function AuthForm() {
+export function AuthForm() {
   const { signIn, signUp } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
@@ -266,14 +266,14 @@ function PlantCollection({ userId }: { userId: string }) {
       </div>
 
       {plants.length === 0 ? (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-4 py-5 text-center text-xs leading-5 text-[var(--color-ink-muted)]">
+        <p className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-5 text-center text-xs leading-5 text-[var(--color-ink-muted)]">
           No plants yet. Add your first one above.
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
           {plants.map((plant) => (
             <li
-              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-3"
+              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
               key={plant.id}
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
@@ -306,7 +306,7 @@ function PlantCollection({ userId }: { userId: string }) {
 }
 
 export function PlantsPanel({ isOpen, onClose }: PlantsPanelProps) {
-  const { session, isLoading, signOut } = useAuth()
+  const { session, isLoading } = useAuth()
 
   if (!isOpen) {
     return null
@@ -359,17 +359,10 @@ export function PlantsPanel({ isOpen, onClose }: PlantsPanelProps) {
         </div>
 
         {session && (
-          <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3 sm:px-6">
-            <span className="truncate text-xs text-[var(--color-ink-muted)]">
+          <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3 sm:px-6">
+            <span className="block truncate text-xs text-[var(--color-ink-muted)]">
               {session.user.email}
             </span>
-            <button
-              className="text-xs font-semibold text-[var(--color-forest)] underline decoration-[var(--color-gold)] decoration-2 underline-offset-4"
-              onClick={signOut}
-              type="button"
-            >
-              Sign out
-            </button>
           </div>
         )}
       </aside>

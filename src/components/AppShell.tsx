@@ -2,7 +2,9 @@ import { useState, type ReactNode } from 'react'
 import { ArchivedChatsPanel } from './ArchivedChatsPanel'
 import { KnowledgeLibraryPanel } from './KnowledgeLibraryPanel'
 import { PlantsPanel } from './PlantsPanel'
+import { SettingsPanel } from './SettingsPanel'
 import { useAuth } from '../lib/AuthContext'
+import { getInitials } from '../lib/profile'
 
 type IconName =
   | 'archive'
@@ -99,9 +101,9 @@ function Icon({ name }: { name: IconName }) {
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activePanel, setActivePanel] = useState<'archive' | 'library' | 'plants' | null>(
-    null,
-  )
+  const [activePanel, setActivePanel] = useState<
+    'archive' | 'library' | 'plants' | 'settings' | null
+  >(null)
 
   const { session } = useAuth()
 
@@ -161,7 +163,7 @@ export function AppShell({ children }: AppShellProps) {
               <button
                 aria-expanded="false"
                 aria-label="Expand sidebar"
-                className="group hidden size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] lg:grid"
+                className="group hidden size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-sprout)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] lg:grid"
                 onClick={() => setIsSidebarCollapsed(false)}
                 title="Expand sidebar"
                 type="button"
@@ -191,7 +193,7 @@ export function AppShell({ children }: AppShellProps) {
             aria-label="New conversation"
             className={`mt-8 flex w-full items-center justify-start gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-3 ${
               collapsed ? 'lg:justify-center lg:px-0' : ''
-            } text-sm font-semibold text-white transition hover:bg-[#1f3e30] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
+            } text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]`}
             title="New conversation"
             type="button"
           >
@@ -256,33 +258,25 @@ export function AppShell({ children }: AppShellProps) {
 
           <div className="mt-auto border-t border-[var(--color-border)] pt-4">
             <button
-              className={`flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-3 text-left text-sm font-medium text-[var(--color-ink-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-forest)] ${centerWhenCollapsed}`}
-              title="Preferences"
-              type="button"
-            >
-              <Icon name="settings" />
-              <span className={hideWhenCollapsed}>Preferences</span>
-            </button>
-            <button
-              className={`mt-2 flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)] ${
+              className={`flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)] ${
                 collapsed ? 'lg:justify-center lg:px-0' : ''
               }`}
               onClick={() => {
                 closeSidebar()
-                setActivePanel('plants')
+                setActivePanel('settings')
               }}
-              title="Your garden"
+              title={session ? 'Profile and settings' : 'Sign in'}
               type="button"
             >
-              <span className="grid size-9 place-items-center rounded-full bg-[var(--color-gold)] font-[family-name:var(--font-display)] font-bold text-[var(--color-forest)]">
-                JM
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--color-gold)] font-[family-name:var(--font-display)] font-bold text-[#21342b]">
+                {session ? getInitials(session.user.email) : <Icon name="user" />}
               </span>
               <span className={`min-w-0 flex-1 ${hideWhenCollapsed}`}>
                 <span className="block truncate text-sm font-semibold text-[var(--color-ink)]">
-                  Your garden
+                  {session ? 'Profile & settings' : 'Sign in'}
                 </span>
                 <span className="block truncate text-xs text-[var(--color-ink-muted)]">
-                  {session?.user.email ?? 'Sign in to save plants'}
+                  {session?.user.email ?? 'Save plants and get reminders'}
                 </span>
               </span>
               <span className={hideWhenCollapsed}>
@@ -315,13 +309,6 @@ export function AppShell({ children }: AppShellProps) {
               <Icon name="sparkle" />
               <span>Grounded guidance for your outdoor space</span>
             </div>
-            <button
-              className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-forest)] transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]"
-              type="button"
-            >
-              <Icon name="user" />
-              <span className="hidden sm:inline">Sign in</span>
-            </button>
           </header>
           {children}
         </main>
@@ -331,6 +318,10 @@ export function AppShell({ children }: AppShellProps) {
         />
         <PlantsPanel
           isOpen={activePanel === 'plants'}
+          onClose={() => setActivePanel(null)}
+        />
+        <SettingsPanel
+          isOpen={activePanel === 'settings'}
           onClose={() => setActivePanel(null)}
         />
         <KnowledgeLibraryPanel
