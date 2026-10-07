@@ -89,12 +89,12 @@ export function KnowledgeLibraryPanel({
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
+        className="absolute inset-0 animate-garden-fade-in bg-[rgb(20_40_30/40%)] backdrop-blur-sm motion-reduce:animate-none"
       />
       <aside
         aria-label="Knowledge library"
         aria-modal="true"
-        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface)] shadow-[var(--shadow-float)] motion-reduce:animate-none"
+        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] glass-strong motion-reduce:animate-none"
         role="dialog"
       >
         <header className="flex h-[73px] items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">
@@ -160,7 +160,7 @@ export function KnowledgeLibraryPanel({
             </div>
 
             {documents.length === 0 ? (
-              <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-5 text-center">
+              <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] glass px-4 py-5 text-center">
                 <span className="mx-auto grid size-9 place-items-center rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] text-[var(--color-moss)]">
                   <Icon name="leaf" />
                 </span>
@@ -176,7 +176,7 @@ export function KnowledgeLibraryPanel({
               <ul className="mt-4 space-y-2">
                 {documents.map((document) => (
                   <li
-                    className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
+                    className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-3"
                     key={document.id}
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">

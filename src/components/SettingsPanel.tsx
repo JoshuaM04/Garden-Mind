@@ -1,6 +1,12 @@
 import { useAuth } from '../lib/AuthContext'
 import { useTheme, type ThemePreference } from '../lib/theme'
-import { getInitials } from '../lib/profile'
+import { useRef, useState } from 'react'
+import {
+  AVATAR_MAX_BYTES,
+  getAvatarUrl,
+  resizeAvatar,
+} from '../lib/profile'
+import { Avatar } from './Avatar'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { AuthForm } from './PlantsPanel'
 
@@ -16,11 +22,44 @@ const themeOptions: { value: ThemePreference; label: string; hint: string }[] = 
 ]
 
 export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
-  const { session, signOut } = useAuth()
+  const { session, signOut, uploadAvatar, removeAvatar } = useAuth()
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const { preference, setPreference } = useTheme()
 
   if (!isOpen) {
     return null
+  }
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) {
+      return
+    }
+    setAvatarError(null)
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Choose an image file.')
+      return
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setAvatarError('Image must be under 8 MB.')
+      return
+    }
+    setIsSaving(true)
+    try {
+      setAvatarError(await uploadAvatar(await resizeAvatar(file)))
+    } catch {
+      setAvatarError('Could not read that image. Try a different file.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleRemove = async () => {
+    setAvatarError(null)
+    setIsSaving(true)
+    setAvatarError(await removeAvatar())
+    setIsSaving(false)
   }
 
   const user = session?.user
@@ -36,13 +75,13 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="absolute inset-0 animate-garden-fade-in bg-[rgb(33_52_43/35%)] motion-reduce:animate-none"
+        className="absolute inset-0 animate-garden-fade-in bg-[rgb(20_40_30/40%)] backdrop-blur-sm motion-reduce:animate-none"
         onClick={onClose}
       />
       <aside
         aria-label="Profile and settings"
         aria-modal="true"
-        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface)] shadow-[var(--shadow-float)] motion-reduce:animate-none"
+        className="relative flex max-h-[85svh] w-full max-w-lg animate-garden-fade-in flex-col overflow-hidden rounded-[var(--radius-md)] glass-strong motion-reduce:animate-none"
         role="dialog"
       >
         <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-5 sm:px-6">
@@ -84,10 +123,12 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
             </h3>
             {user ? (
               <>
-                <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[var(--color-gold)] font-[family-name:var(--font-display)] text-lg font-bold text-[#21342b]">
-                    {getInitials(user.email)}
-                  </span>
+                <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-4">
+                  <Avatar
+                    className="size-16 text-xl"
+                    email={user.email}
+                    imageUrl={getAvatarUrl(user)}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
                       {user.email}
@@ -95,8 +136,48 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                     <p className="text-xs text-[var(--color-ink-muted)]">
                       {memberSince ? `Member since ${memberSince}` : 'Signed in'}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <input
+                        accept="image/png,image/jpeg,image/webp"
+                        aria-label="Upload profile picture"
+                        className="sr-only"
+                        onChange={(event) => {
+                          void handleFile(event.target.files?.[0])
+                          event.target.value = ''
+                        }}
+                        ref={fileInput}
+                        type="file"
+                      />
+                      <button
+                        className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--color-forest)] transition hover:bg-[var(--glass-bg-strong)] disabled:opacity-50"
+                        disabled={isSaving}
+                        onClick={() => fileInput.current?.click()}
+                        type="button"
+                      >
+                        {isSaving
+                          ? 'Saving…'
+                          : getAvatarUrl(user)
+                            ? 'Change picture'
+                            : 'Upload picture'}
+                      </button>
+                      {getAvatarUrl(user) && (
+                        <button
+                          className="rounded-[var(--radius-md)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:text-[var(--color-forest)] disabled:opacity-50"
+                          disabled={isSaving}
+                          onClick={() => void handleRemove()}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
+                {avatarError && (
+                  <p className="mt-2 text-xs text-[var(--color-danger)]" role="alert">
+                    {avatarError}
+                  </p>
+                )}
                 <button
                   className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] px-4 py-2 text-sm font-semibold text-[var(--color-forest)] transition hover:bg-[var(--color-surface-muted)]"
                   onClick={async () => {
@@ -142,7 +223,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
                     className={`rounded-[var(--radius-md)] border px-3 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)] ${
                       isSelected
                         ? 'border-[var(--color-forest)] bg-[var(--color-sprout)]'
-                        : 'border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border-strong)]'
+                        : 'border-[var(--color-border)] glass hover:border-[var(--color-border-strong)]'
                     }`}
                     key={option.value}
                     onClick={() => setPreference(option.value)}
