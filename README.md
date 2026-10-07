@@ -91,6 +91,21 @@ Add these server-side values to your `.env` file
 | `RATE_LIMIT_DOCUMENTS_LIMIT` / `RATE_LIMIT_DOCUMENTS_WINDOW_SECONDS` | `10` / `3600` | Uploads per window |
 | `RATE_LIMIT_FAIL_OPEN` | `false` | Allow requests if Upstash is unreachable (default rejects with `503`) |
 | `RATE_LIMIT_TRUST_PROXY_HEADERS` | `true` on Vercel | Trust `X-Forwarded-For` / `X-Real-IP` |
+| `TOKEN_BUDGET_ANONYMOUS_DAILY` | `30000` | Model tokens per day for signed-out visitors (per hashed IP) |
+| `TOKEN_BUDGET_USER_DAILY` | `150000` | Model tokens per day for each signed-in user |
+
+### Daily Token Budget
+
+On top of the request limit, `/api/chat` enforces a daily token budget for
+Llama 3.3 70B. The browser sends the Supabase access token; the backend verifies
+it against the project's JWKS (`SUPABASE_JWKS_URL`, or derived from
+`SUPABASE_URL` / `VITE_SUPABASE_URL`) and meters signed-in users by user ID.
+Invalid, expired or missing tokens use the smaller anonymous budget, keyed by
+the hashed IP. The real token count from every model call, including web-search
+rounds, is added to the Upstash counter, which resets at 00:00 UTC. Requests
+over budget get `429` with the time until reset. Message length (2,000
+characters), history length and document context are capped to bound the cost
+of a single request.
 
 ### Accounts and Plant Collection
 

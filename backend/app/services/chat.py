@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .rag import MAX_DOCUMENT_CONTEXT_CHARACTERS
 from .rate_limit import chat_rate_limit
+from .usage import Allowance, TokenUsage, check_token_budget, record_usage
 from .search import (
     WEB_SEARCH_TOOL,
     parse_tool_arguments,
@@ -19,6 +20,11 @@ from .search import (
 
 router = APIRouter()
 
+# Input caps keep one request's token cost bounded.
+MAX_MESSAGE_CHARACTERS = 2_000
+MAX_HISTORY_CONTENT_CHARACTERS = 6_000
+MAX_HISTORY_ITEMS = 40
+
 client = InferenceClient(
     api_key=os.environ["HF_TOKEN"],
 )
@@ -26,7 +32,7 @@ client = InferenceClient(
 # Class model for one prior conversation turn (user or assistant)
 class Message(BaseModel):
     role: Literal["user", "assistant"]
-    content: str
+    content: str = Field(max_length=MAX_HISTORY_CONTENT_CHARACTERS)
 
 
 class PlantContext(BaseModel):
@@ -43,8 +49,8 @@ class PlantContext(BaseModel):
 
 # Class model for the entire incoming request + list[Message] history
 class ChatRequest(BaseModel):
-    message: str
-    history: list[Message]
+    message: str = Field(max_length=MAX_MESSAGE_CHARACTERS)
+    history: list[Message] = Field(max_length=MAX_HISTORY_ITEMS)
     document_context: str | None = Field(
         default=None,
         max_length=MAX_DOCUMENT_CONTEXT_CHARACTERS,
@@ -205,23 +211,26 @@ def build_messages(item: ChatRequest) -> list[dict[str, str]]:
     return messages
 
 
-def complete(messages: list, use_tools: bool):
+def complete(messages: list, use_tools: bool, usage: TokenUsage | None = None):
     kwargs = {"tools": [WEB_SEARCH_TOOL], "tool_choice": "auto"} if use_tools else {}
-    return client.chat.completions.create(
+    response = client.chat.completions.create(
         model=MODEL,
         messages=messages,
         max_tokens=500,
         temperature=0.0,
         **kwargs,
     )
+    if usage is not None:
+        usage.add_response(response, messages)
+    return response
 
 
-def generate_reply(messages: list) -> str:
+def generate_reply(messages: list, usage: TokenUsage | None = None) -> str:
     tools_available = search_enabled()
     searches_used = 0
 
     for _ in range(MAX_TOOL_ROUNDS):
-        message = complete(messages, tools_available).choices[0].message
+        message = complete(messages, tools_available, usage).choices[0].message
         tool_calls = getattr(message, "tool_calls", None) if tools_available else None
         if not tool_calls:
             return message.content
@@ -259,16 +268,24 @@ def generate_reply(messages: list) -> str:
             )
 
     # Tool rounds exhausted: force a final plain-text answer
-    return complete(messages, False).choices[0].message.content
+    return complete(messages, False, usage).choices[0].message.content
 
 
 @router.post('/chat', dependencies=[Depends(chat_rate_limit)])
-def chat(item: ChatRequest):
+def chat(
+    item: ChatRequest,
+    allowance: Allowance | None = Depends(check_token_budget),
+):
     if is_prompt_injection(item.message):
         return { "assistant message": PROMPT_INJECTION_RESPONSE }
 
     messages = build_messages(item)
-    resp = generate_reply(messages)
+    usage = TokenUsage()
+    try:
+        resp = generate_reply(messages, usage)
+    finally:
+        # Count tokens even when a later model call fails.
+        record_usage(allowance, usage.total)
 
     sources = [item.document_filename or "Uploaded document"] if item.document_context else []
 

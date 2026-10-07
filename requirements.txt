@@ -9,3 +9,4 @@ pypdf
 python-dotenv
 python-multipart
 docx2txt
+PyJWT[crypto]

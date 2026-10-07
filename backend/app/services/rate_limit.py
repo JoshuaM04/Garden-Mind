@@ -143,13 +143,18 @@ def hash_ip(ip: str) -> str:
     return hmac.new(get_salt(), ip.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def consume(rule: RateLimitRule, ip: str) -> tuple[int, int]:
+def get_redis_credentials() -> tuple[str, str]:
     url = os.environ.get("UPSTASH_REDIS_REST_URL", "").strip().rstrip("/")
     token = os.environ.get("UPSTASH_REDIS_REST_TOKEN", "").strip()
     if not url or not token:
         raise RateLimitConfigError(
             "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set."
         )
+    return url, token
+
+
+def consume(rule: RateLimitRule, ip: str) -> tuple[int, int]:
+    url, token = get_redis_credentials()
 
     key = f"{KEY_PREFIX}:{rule.scope}:{hash_ip(ip)}"
     count, ttl = run_redis_command(

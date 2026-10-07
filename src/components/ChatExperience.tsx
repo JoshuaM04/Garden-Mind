@@ -46,6 +46,8 @@ interface PlantContext {
 }
 
 const MAX_PLANTS_FOR_CHAT = 20
+const MAX_MESSAGE_LENGTH = 2000
+const MAX_HISTORY_MESSAGES = 12
 
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
@@ -502,10 +504,13 @@ export function ChatExperience({
 
       const response = await fetch(chatEndpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(session ? { authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           message: content,
-          history: conversation,
+          history: conversation.slice(-MAX_HISTORY_MESSAGES),
           document_context: documentContext,
           document_filename: attachment?.name,
           plants,
@@ -698,6 +703,7 @@ export function ChatExperience({
               <textarea
                 className="block max-h-36 min-h-14 w-full resize-none border-0 bg-transparent py-2 text-[15px] leading-6 text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
                 id="garden-question"
+                maxLength={MAX_MESSAGE_LENGTH}
                 ref={composerInput}
                 onChange={(event) => {
                   stopTyping()
