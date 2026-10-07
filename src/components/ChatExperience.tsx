@@ -8,6 +8,12 @@ import {
 } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
+import {
+  createChat,
+  loadMessages,
+  saveMessage,
+  titleFromMessage,
+} from '../lib/chats'
 
 type IconName =
   | 'arrow'
@@ -251,8 +257,13 @@ function Icon({ name }: { name: IconName }) {
   )
 }
 
-export function ChatExperience() {
+interface ChatExperienceProps {
+  initialChatId?: string | null
+}
+
+export function ChatExperience({ initialChatId = null }: ChatExperienceProps) {
   const { session } = useAuth()
+  const chatId = useRef<string | null>(initialChatId)
   const [message, setMessage] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const [documentContext, setDocumentContext] = useState<string | null>(null)
@@ -295,6 +306,61 @@ export function ChatExperience() {
   }
 
   useEffect(() => stopTyping, [])
+
+  useEffect(() => {
+    if (!initialChatId || !session) {
+      return
+    }
+
+    let cancelled = false
+    loadMessages(initialChatId)
+      .then((saved) => {
+        if (!cancelled) {
+          setConversation(
+            saved.map((item) => ({
+              id: item.id,
+              content: item.content,
+              role: item.role,
+              sources: item.sources ?? undefined,
+            })),
+          )
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? `Could not load this chat. ${error.message}`
+              : 'Could not load this chat.',
+          )
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialChatId, session])
+
+  async function persist(
+    item: { role: 'assistant' | 'user'; content: string; sources?: string[] },
+  ) {
+    if (!session) {
+      return
+    }
+
+    try {
+      if (!chatId.current) {
+        chatId.current = await createChat(titleFromMessage(item.content))
+      }
+      await saveMessage(chatId.current, item)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? `This chat could not be saved. ${error.message}`
+          : 'This chat could not be saved.',
+      )
+    }
+  }
 
   useEffect(() => {
     const messagePane = conversationMessages.current
@@ -384,6 +450,7 @@ export function ChatExperience() {
       ...currentConversation,
       { id: Date.now(), content, role: 'user' },
     ])
+    const savedUserMessage = persist({ role: 'user', content })
     stopTyping()
     setMessage('')
     setErrorMessage(null)
@@ -438,6 +505,12 @@ export function ChatExperience() {
         throw new Error('Garden Mind returned an unexpected response. Please try again.')
       }
 
+      await savedUserMessage
+      void persist({
+        role: 'assistant',
+        content: data['assistant message'],
+        sources: data.sources,
+      })
       setConversation((currentConversation) => [
         ...currentConversation,
         {

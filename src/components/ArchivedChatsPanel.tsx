@@ -1,29 +1,27 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useAuth } from '../lib/AuthContext'
+import { deleteChat, listChats, type SavedChat } from '../lib/chats'
 
 interface ArchivedChatsPanelProps {
   isOpen: boolean
   onClose: () => void
+  onOpenChat: (chatId: string) => void
+  onSignIn: () => void
 }
 
 type IconName = 'arrow' | 'clock' | 'message' | 'search' | 'user' | 'x'
 
-const archivedChats = [
-  {
-    date: 'Today',
-    preview: 'A low-water front garden for afternoon sun',
-    title: 'Drought-tolerant border',
-  },
-  {
-    date: 'Yesterday',
-    preview: 'Comparing your local native-plant research',
-    title: 'Pollinator garden notes',
-  },
-  {
-    date: 'Sep 17',
-    preview: 'Ideas for a shaded path and woodland edge',
-    title: 'Backyard shade plan',
-  },
-]
+function formatDate(value: string) {
+  const date = new Date(value)
+  const days = Math.floor(
+    (new Date().setHours(0, 0, 0, 0) - new Date(value).setHours(0, 0, 0, 0)) /
+      86_400_000,
+  )
+
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -74,7 +72,57 @@ function Icon({ name }: { name: IconName }) {
 export function ArchivedChatsPanel({
   isOpen,
   onClose,
+  onOpenChat,
+  onSignIn,
 }: ArchivedChatsPanelProps) {
+  const { session } = useAuth()
+  const userId = session?.user.id
+  const [chats, setChats] = useState<SavedChat[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    if (!isOpen || !userId) {
+      return
+    }
+
+    let cancelled = false
+    listChats()
+      .then((items) => {
+        if (!cancelled) {
+          setChats(items)
+          setError(null)
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Could not load chats.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, userId])
+
+  async function removeChat(chatId: string) {
+    try {
+      await deleteChat(chatId)
+      setChats((current) => current.filter((chat) => chat.id !== chatId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete chat.')
+    }
+  }
+
+  const isLoading = Boolean(userId) && !loaded
+  const visibleChats = chats.filter((chat) =>
+    chat.title.toLowerCase().includes(query.trim().toLowerCase()),
+  )
+
   if (!isOpen) {
     return null
   }
@@ -119,8 +167,10 @@ export function ArchivedChatsPanel({
             <input
               className="h-11 min-w-0 flex-1 border-0 bg-transparent text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-faint)]"
               id="search-chats"
+              onChange={(event) => setQuery(event.target.value)}
               placeholder="Search your chats"
               type="search"
+              value={query}
             />
           </label>
         </div>
@@ -130,54 +180,81 @@ export function ArchivedChatsPanel({
             <Icon name="clock" />
             Recent
           </div>
-          <div className="space-y-1">
-            {archivedChats.map((chat) => (
-              <button
-                className="group flex w-full items-start gap-3 rounded-[var(--radius-md)] p-3 text-left transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
-                key={chat.title}
-                type="button"
-              >
-                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
-                  <Icon name="message" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-[var(--color-forest)]">
-                    {chat.title}
-                  </span>
-                  <span className="mt-1 block truncate text-xs text-[var(--color-ink-muted)]">
-                    {chat.preview}
-                  </span>
-                </span>
-                <span className="pt-1 text-[0.68rem] font-medium text-[var(--color-ink-faint)]">
-                  {chat.date}
-                </span>
-              </button>
-            ))}
-          </div>
+          {error && (
+            <p className="px-2 pb-2 text-xs text-[var(--color-danger)]" role="alert">
+              {error}
+            </p>
+          )}
+          {!session ? (
+            <p className="px-2 text-sm text-[var(--color-ink-muted)]">
+              Sign in to see your saved chats.
+            </p>
+          ) : isLoading ? (
+            <p className="px-2 text-sm text-[var(--color-ink-muted)]">Loading…</p>
+          ) : visibleChats.length === 0 ? (
+            <p className="px-2 text-sm text-[var(--color-ink-muted)]">
+              {chats.length === 0
+                ? 'No saved chats yet. Start a conversation and it will appear here.'
+                : 'No chats match your search.'}
+            </p>
+          ) : (
+            <ul className="space-y-1">
+              {visibleChats.map((chat) => (
+                <li className="group relative" key={chat.id}>
+                  <button
+                    className="flex w-full items-center gap-3 rounded-[var(--radius-md)] p-3 pr-12 text-left transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                    onClick={() => onOpenChat(chat.id)}
+                    type="button"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">
+                      <Icon name="message" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--color-forest)]">
+                      {chat.title}
+                    </span>
+                    <span className="text-[0.68rem] font-medium text-[var(--color-ink-faint)]">
+                      {formatDate(chat.updated_at)}
+                    </span>
+                  </button>
+                  <button
+                    aria-label={`Delete chat ${chat.title}`}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[var(--radius-md)] p-1.5 text-[var(--color-ink-faint)] opacity-0 transition hover:text-[var(--color-danger)] focus-visible:opacity-100 group-hover:opacity-100"
+                    onClick={() => void removeChat(chat.id)}
+                    type="button"
+                  >
+                    <Icon name="x" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        <div className="m-4 rounded-[var(--radius-md)] bg-[var(--color-sprout)] p-4 sm:m-5">
-          <div className="flex gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)]">
-              <Icon name="user" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-[var(--color-forest)]">
-                Keep every garden idea
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[var(--color-ink-muted)]">
-                Sign in to save chats securely and access them on any device.
-              </p>
-              <button
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-forest)] underline decoration-[var(--color-gold)] decoration-2 underline-offset-4"
-                type="button"
-              >
-                Sign in when ready
-                <Icon name="arrow" />
-              </button>
+        {!session && (
+          <div className="m-4 rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-4 sm:m-5">
+            <div className="flex gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[image:var(--avatar-bg)] text-[var(--avatar-fg)]">
+                <Icon name="user" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-forest)]">
+                  Keep every garden idea
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-ink-muted)]">
+                  Sign in to save chats securely and access them on any device.
+                </p>
+                <button
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-forest)] underline decoration-[var(--color-gold)] decoration-2 underline-offset-4"
+                  onClick={onSignIn}
+                  type="button"
+                >
+                  Sign in
+                  <Icon name="arrow" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
     </div>
   )
