@@ -137,7 +137,7 @@ export function KnowledgeLibraryPanel({
               type="file"
             />
             <button
-              className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f3e30]"
+              className="mt-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-forest)] px-4 py-2.5 text-sm font-semibold text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)]"
               onClick={() => inputRef.current?.click()}
               type="button"
             >
@@ -160,7 +160,7 @@ export function KnowledgeLibraryPanel({
             </div>
 
             {documents.length === 0 ? (
-              <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-4 py-5 text-center">
+              <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-5 text-center">
                 <span className="mx-auto grid size-9 place-items-center rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] text-[var(--color-moss)]">
                   <Icon name="leaf" />
                 </span>
@@ -176,7 +176,7 @@ export function KnowledgeLibraryPanel({
               <ul className="mt-4 space-y-2">
                 {documents.map((document) => (
                   <li
-                    className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-3"
+                    className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
                     key={document.id}
                   >
                     <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--color-sprout)] text-[var(--color-moss)]">

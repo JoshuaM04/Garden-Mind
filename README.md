@@ -91,3 +91,14 @@ Add these server-side values to your `.env` file
 | `RATE_LIMIT_DOCUMENTS_LIMIT` / `RATE_LIMIT_DOCUMENTS_WINDOW_SECONDS` | `10` / `3600` | Uploads per window |
 | `RATE_LIMIT_FAIL_OPEN` | `false` | Allow requests if Upstash is unreachable (default rejects with `503`) |
 | `RATE_LIMIT_TRUST_PROXY_HEADERS` | `true` on Vercel | Trust `X-Forwarded-For` / `X-Real-IP` |
+
+### Accounts and Plant Collection
+
+Users sign in with Supabase Auth and keep a personal plant collection in the `plants` table. Row-level security restricts every row to its owner, so the browser can use the publishable key safely. When a signed-in user chats, up to 20 plant names and growing conditions are sent as context; private notes are not included. The schema lives in `supabase/migrations/`; apply it in the Supabase SQL editor (or with the Supabase CLI) before using the "My plants" panel.
+
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `VITE_SUPABASE_URL` | frontend | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | frontend | Publishable key (safe for the browser) |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWKS_URL` | backend only | Used by upcoming server-side tools and reminder jobs; never expose the secret key |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | backend only | Email delivery for upcoming care reminders |

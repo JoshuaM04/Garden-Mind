@@ -22,6 +22,33 @@
   --radius-xl: 2rem;
   --shadow-card: 0 22px 60px rgb(35 57 44 / 10%);
   --shadow-float: 0 10px 30px rgb(35 57 44 / 14%);
+  --color-card: #ffffff;
+  --color-on-forest: #ffffff;
+  --color-forest-hover: #1f3e30;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --color-canvas: #101a14;
+  --color-surface: #16221b;
+  --color-surface-muted: #1c2b22;
+  --color-ink: #e6eee6;
+  --color-ink-muted: #a3b2a6;
+  --color-ink-faint: #7f8f83;
+  --color-forest: #9fcaa9;
+  --color-moss: #8fb79a;
+  --color-sage: #3d5a47;
+  --color-sprout: #24382c;
+  --color-gold: #d5ae53;
+  --color-border: #2c3e33;
+  --color-border-strong: #3a4f42;
+  --color-shadow: rgb(0 0 0 / 40%);
+  --shadow-card: 0 22px 60px rgb(0 0 0 / 35%);
+  --shadow-float: 0 10px 30px rgb(0 0 0 / 45%);
+  --color-card: #1a2820;
+  --color-on-forest: #10261a;
+  --color-forest-hover: #b6d9bf;
+  color-scheme: dark;
 }
 
 @keyframes garden-pulse {

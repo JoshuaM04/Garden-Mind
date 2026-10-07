@@ -6,6 +6,8 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react'
+import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 
 type IconName =
   | 'arrow'
@@ -28,6 +30,16 @@ interface DocumentUploadResponse {
   status: 'processed'
   truncated: boolean
 }
+
+interface PlantContext {
+  nickname: string
+  species: string | null
+  location: 'indoor' | 'outdoor'
+  sun_exposure: 'full_sun' | 'partial_sun' | 'bright_indirect' | 'low_light'
+  planted_on: string | null
+}
+
+const MAX_PLANTS_FOR_CHAT = 20
 
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
@@ -240,6 +252,7 @@ function Icon({ name }: { name: IconName }) {
 }
 
 export function ChatExperience() {
+  const { session } = useAuth()
   const [message, setMessage] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const [documentContext, setDocumentContext] = useState<string | null>(null)
@@ -344,6 +357,26 @@ export function ChatExperience() {
     setIsSending(true)
 
     try {
+      let plants: PlantContext[] = []
+      let plantsLoaded = false
+      if (session) {
+        const { data, error: plantsError } = await supabase
+          .from('plants')
+          .select('nickname, species, location, sun_exposure, planted_on')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(MAX_PLANTS_FOR_CHAT)
+
+        if (plantsError) {
+          setErrorMessage(
+            `Saved plant context is unavailable, so this answer won't be personalized. ${plantsError.message}`,
+          )
+        } else {
+          plants = data ?? []
+          plantsLoaded = true
+        }
+      }
+
       const response = await fetch(chatEndpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -352,6 +385,8 @@ export function ChatExperience() {
           history: conversation,
           document_context: documentContext,
           document_filename: attachment?.name,
+          plants,
+          plants_loaded: plantsLoaded,
         }),
       })
 
@@ -427,7 +462,7 @@ export function ChatExperience() {
               <div className="mt-9 hidden w-full gap-3 text-left sm:grid sm:grid-cols-3">
                 {suggestions.map((suggestion) => (
                   <button
-                    className="group rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                    className="group rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--color-sage)] hover:shadow-[var(--shadow-float)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
                     key={suggestion.label}
                     onClick={() => setMessage(suggestion.prompt)}
                     type="button"
@@ -460,7 +495,7 @@ export function ChatExperience() {
                     </span>
                   )}
                   {chatMessage.role === 'assistant' ? (
-                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
+                    <div className="w-full max-w-full space-y-3 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm leading-6 text-[var(--color-ink)] sm:w-auto sm:max-w-[85%]">
                       {formatAssistantMessage(chatMessage.content)}
                       {chatMessage.sources && chatMessage.sources.length > 0 && (
                         <p className="border-t border-[var(--color-border)] pt-2 text-xs leading-5 text-[var(--color-ink-muted)]">
@@ -469,7 +504,7 @@ export function ChatExperience() {
                       )}
                     </div>
                   ) : (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-white">
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] rounded-br-sm bg-[var(--color-forest)] px-4 py-3 text-sm leading-6 text-[var(--color-on-forest)]">
                       {chatMessage.content}
                     </p>
                   )}
@@ -482,7 +517,7 @@ export function ChatExperience() {
                     </span>
                     <div
                       aria-hidden="true"
-                      className="flex h-12 items-center gap-1 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-white px-4"
+                      className="flex h-12 items-center gap-1 rounded-[var(--radius-md)] rounded-bl-sm border border-[var(--color-border)] bg-[var(--color-card)] px-4"
                     >
                       {[0, 1, 2].map((dot) => (
                         <span
@@ -498,9 +533,9 @@ export function ChatExperience() {
           )}
         </div>
 
-        <div className="mt-4 shrink-0 bg-[linear-gradient(to_bottom,transparent,rgba(251,252,247,0.96)_20%)] pb-2 pt-8">
+        <div className="mt-4 shrink-0 bg-[linear-gradient(to_bottom,transparent,color-mix(in_srgb,var(--color-surface)_96%,transparent)_20%)] pb-2 pt-8">
           <form
-            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-white p-2 shadow-[var(--shadow-float)]"
+            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-2 shadow-[var(--shadow-float)]"
             onSubmit={sendMessage}
           >
             {attachment && (
@@ -520,7 +555,7 @@ export function ChatExperience() {
                 </span>
                 <button
                   aria-label={`Remove ${attachment.name}`}
-                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-white hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-md p-1 text-[var(--color-ink-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-forest)] disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={isUploading}
                   onClick={removeAttachment}
                   type="button"
@@ -572,7 +607,7 @@ export function ChatExperience() {
               </div>
               <button
                 aria-label="Send message"
-                className="grid size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-white transition hover:bg-[#1f3e30] disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid size-10 place-items-center rounded-[var(--radius-md)] bg-[var(--color-forest)] text-[var(--color-on-forest)] transition hover:bg-[var(--color-forest-hover)] disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={
                   isSending ||
                   isUploading ||
@@ -591,6 +626,10 @@ export function ChatExperience() {
             </p>
           )}
           <p className="mt-3 text-center text-xs text-[var(--color-ink-faint)]">
+            When signed in, your saved plant names and growing conditions help
+            personalize answers. Private notes are not included.
+          </p>
+          <p className="mt-2 text-center text-xs text-[var(--color-ink-faint)]">
             Garden Mind can make mistakes. Verify plant safety and local growing
             guidance.
           </p>
