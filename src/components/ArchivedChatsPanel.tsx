@@ -4,6 +4,7 @@ import { deleteChat, listChats, type SavedChat } from '../lib/chats'
 
 interface ArchivedChatsPanelProps {
   isOpen: boolean
+  onChatDeleted: (chatId: string) => void
   onClose: () => void
   onOpenChat: (chatId: string) => void
   onSignIn: () => void
@@ -71,6 +72,7 @@ function Icon({ name }: { name: IconName }) {
 
 export function ArchivedChatsPanel({
   isOpen,
+  onChatDeleted,
   onClose,
   onOpenChat,
   onSignIn,
@@ -81,6 +83,8 @@ export function ArchivedChatsPanel({
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<SavedChat | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!isOpen || !userId) {
@@ -109,12 +113,22 @@ export function ArchivedChatsPanel({
     }
   }, [isOpen, userId])
 
-  async function removeChat(chatId: string) {
+  async function confirmDelete() {
+    if (!pendingDelete) {
+      return
+    }
+
+    setIsDeleting(true)
     try {
-      await deleteChat(chatId)
-      setChats((current) => current.filter((chat) => chat.id !== chatId))
+      await deleteChat(pendingDelete.id)
+      setChats((current) => current.filter((chat) => chat.id !== pendingDelete.id))
+      onChatDeleted(pendingDelete.id)
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not delete chat.')
+    } finally {
+      setIsDeleting(false)
+      setPendingDelete(null)
     }
   }
 
@@ -219,7 +233,7 @@ export function ArchivedChatsPanel({
                   <button
                     aria-label={`Delete chat ${chat.title}`}
                     className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[var(--radius-md)] p-1.5 text-[var(--color-ink-faint)] opacity-0 transition hover:text-[var(--color-danger)] focus-visible:opacity-100 group-hover:opacity-100"
-                    onClick={() => void removeChat(chat.id)}
+                    onClick={() => setPendingDelete(chat)}
                     type="button"
                   >
                     <Icon name="x" />
@@ -229,6 +243,61 @@ export function ArchivedChatsPanel({
             </ul>
           )}
         </div>
+
+        {pendingDelete && (
+          <div
+            className="absolute inset-0 z-10 grid place-items-center bg-[rgb(20_40_30/40%)] p-4 backdrop-blur-sm"
+            onClick={() => !isDeleting && setPendingDelete(null)}
+          >
+            <div
+              aria-describedby="delete-chat-description"
+              aria-labelledby="delete-chat-title"
+              aria-modal="true"
+              className="w-full max-w-sm animate-garden-fade-in rounded-[var(--radius-md)] border border-[var(--glass-edge)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-float)] motion-reduce:animate-none"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && !isDeleting) {
+                  event.stopPropagation()
+                  setPendingDelete(null)
+                }
+              }}
+              role="alertdialog"
+            >
+              <h3
+                className="text-base font-semibold text-[var(--color-forest)]"
+                id="delete-chat-title"
+              >
+                Delete this chat?
+              </h3>
+              <p
+                className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]"
+                id="delete-chat-description"
+              >
+                &ldquo;{pendingDelete.title}&rdquo; and all of its messages will
+                be permanently deleted. This can&apos;t be undone.
+              </p>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  autoFocus
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] transition hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-forest)]"
+                  disabled={isDeleting}
+                  onClick={() => setPendingDelete(null)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="rounded-[var(--radius-md)] bg-[var(--color-danger)] px-4 py-2 text-sm font-semibold text-[var(--color-on-danger)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-danger)] disabled:opacity-60"
+                  disabled={isDeleting}
+                  onClick={() => void confirmDelete()}
+                  type="button"
+                >
+                  {isDeleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!session && (
           <div className="m-4 rounded-[var(--radius-md)] border border-[var(--color-border)] glass p-4 sm:m-5">

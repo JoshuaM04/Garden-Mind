@@ -7,12 +7,27 @@ function App() {
     key: 0,
     id: null,
   })
-  const openChat = (id: string | null) =>
+  const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const openChat = (id: string | null) => {
+    setActiveChatId(id)
     setChat((current) => ({ key: current.key + 1, id }))
+  }
 
   return (
-    <AppShell onNewChat={() => openChat(null)} onOpenChat={openChat}>
-      <ChatExperience initialChatId={chat.id} key={chat.key} />
+    <AppShell
+      onChatDeleted={(id) => {
+        if (id === activeChatId) {
+          openChat(null)
+        }
+      }}
+      onNewChat={() => openChat(null)}
+      onOpenChat={openChat}
+    >
+      <ChatExperience
+        initialChatId={chat.id}
+        key={chat.key}
+        onChatCreated={setActiveChatId}
+      />
     </AppShell>
   )
 }

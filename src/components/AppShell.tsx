@@ -23,6 +23,7 @@ type IconName =
 
 interface AppShellProps {
   children: ReactNode
+  onChatDeleted: (chatId: string) => void
   onNewChat: () => void
   onOpenChat: (chatId: string) => void
 }
@@ -101,7 +102,12 @@ function Icon({ name }: { name: IconName }) {
   )
 }
 
-export function AppShell({ children, onNewChat, onOpenChat }: AppShellProps) {
+export function AppShell({
+  children,
+  onChatDeleted,
+  onNewChat,
+  onOpenChat,
+}: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<
@@ -329,6 +335,7 @@ export function AppShell({ children, onNewChat, onOpenChat }: AppShellProps) {
         </main>
         <ArchivedChatsPanel
           isOpen={activePanel === 'archive'}
+          onChatDeleted={onChatDeleted}
           onClose={() => setActivePanel(null)}
           onOpenChat={(id) => {
             setActivePanel(null)
