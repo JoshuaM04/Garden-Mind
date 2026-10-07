@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { ArchivedChatsPanel } from './ArchivedChatsPanel'
 import { KnowledgeLibraryPanel } from './KnowledgeLibraryPanel'
+import { PlantsPanel } from './PlantsPanel'
+import { useAuth } from '../lib/AuthContext'
 
 type IconName =
   | 'archive'
@@ -97,9 +99,11 @@ function Icon({ name }: { name: IconName }) {
 export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activePanel, setActivePanel] = useState<'archive' | 'library' | null>(
+  const [activePanel, setActivePanel] = useState<'archive' | 'library' | 'plants' | null>(
     null,
   )
+
+  const { session } = useAuth()
 
   const closeSidebar = () => setIsSidebarOpen(false)
   const collapsed = isSidebarCollapsed
@@ -210,6 +214,19 @@ export function AppShell({ children }: AppShellProps) {
               <span className={hideWhenCollapsed}>Garden chat</span>
             </a>
             <button
+              aria-current={activePanel === 'plants' ? 'page' : undefined}
+              className={navItemClass(activePanel === 'plants')}
+              onClick={() => {
+                closeSidebar()
+                setActivePanel('plants')
+              }}
+              title="My plants"
+              type="button"
+            >
+              <Icon name="leaf" />
+              <span className={hideWhenCollapsed}>My plants</span>
+            </button>
+            <button
               aria-current={activePanel === 'archive' ? 'page' : undefined}
               className={navItemClass(activePanel === 'archive')}
               onClick={() => {
@@ -250,6 +267,10 @@ export function AppShell({ children }: AppShellProps) {
               className={`mt-2 flex w-full items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-left transition hover:bg-[var(--color-surface-muted)] ${
                 collapsed ? 'lg:justify-center lg:px-0' : ''
               }`}
+              onClick={() => {
+                closeSidebar()
+                setActivePanel('plants')
+              }}
               title="Your garden"
               type="button"
             >
@@ -261,7 +282,7 @@ export function AppShell({ children }: AppShellProps) {
                   Your garden
                 </span>
                 <span className="block truncate text-xs text-[var(--color-ink-muted)]">
-                  Sign in to save chats
+                  {session?.user.email ?? 'Sign in to save plants'}
                 </span>
               </span>
               <span className={hideWhenCollapsed}>
@@ -306,6 +327,10 @@ export function AppShell({ children }: AppShellProps) {
         </main>
         <ArchivedChatsPanel
           isOpen={activePanel === 'archive'}
+          onClose={() => setActivePanel(null)}
+        />
+        <PlantsPanel
+          isOpen={activePanel === 'plants'}
           onClose={() => setActivePanel(null)}
         />
         <KnowledgeLibraryPanel
